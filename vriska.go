@@ -7,8 +7,9 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"regexp"
-	"strconv" //remove this later
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -19,15 +20,31 @@ const (
 	prefix = "vriska:"
 )
 
-// Variables used for command line parameters
 var (
+	// command line argument
 	Token string
+	// error logging
+	Log         *log.Logger
+	currentTime string
 )
 
 func init() {
+	executable, e := os.Executable()
+	if e != nil {
+		panic(e)
+	}
+	path := filepath.Dir(executable)
 
+	// command line argument
 	flag.StringVar(&Token, "t", "", "Bot Token")
 	flag.Parse()
+	// error logging
+	currentTime = time.Now().Format("2006-01-02@15h04m")
+	file, err := os.Create(path + "logs@" + currentTime + ".log")
+	if err != nil {
+		panic(err)
+	}
+	Log = log.New(file, "", log.Ldate|log.Ltime|log.Llongfile|log.LUTC)
 }
 
 func main() {
@@ -46,6 +63,7 @@ func main() {
 	err = bot.Open()
 	if err != nil {
 		fmt.Println("error opening connection,", err)
+		Log.Println("error opening connection,", err)
 		return
 	}
 
@@ -75,6 +93,7 @@ func messageCreate(discordSession *discordgo.Session,
 		case "roll":
 			discordSession.ChannelMessageSend(discordMessage.ChannelID,
 				strconv.FormatBool(isDiceMessageFormated(message[2])))
+			fmt.Println(convertToDiceArray(message[2]))
 		case "lroll":
 			discordSession.ChannelMessageSend(discordMessage.ChannelID,
 				"placeholder!")
@@ -101,7 +120,10 @@ func messageCreate(discordSession *discordgo.Session,
 }
 
 func isDiceMessageFormated(diceString string) bool {
-	compare, _ := regexp.MatchString("[0-9]+d[0-9]+((\\+|-)[0-9])?", diceString)
+	compare, err := regexp.MatchString("[0-9]+d[0-9]+((\\+|-)[0-9])?", diceString)
+	if err != nil {
+		Log.Println("error, ", err)
+	}
 	if compare {
 		return true
 	} else {
@@ -118,17 +140,18 @@ func convertToDiceArray(diceString string) []int {
 	divider := regexp.MustCompile("(d|\\+|-)")
 	parsedDiceString := divider.FindStringSubmatch(diceString)
 
-	var DiceStringAsInt []int
+	var DiceStringAsIntArray []int
 
 	for i, ele := range parsedDiceString {
 		x, err := strconv.ParseInt(ele, 0, 0)
-		DiceStringAsInt[i] = x
+		DiceStringAsIntArray[i] = int(x)
 		if err != nil {
 			fmt.Println(err)
+			Log.Println(err)
 		}
 	}
 
-	return DiceStringAsInt
+	return DiceStringAsIntArray
 
 }
 
