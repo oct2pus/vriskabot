@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"log"
+	"math/rand"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -136,20 +137,35 @@ func returnRoll(diceString string, discordSession *discordgo.Session, channelID 
 	if valid {
 		dieSlices := divideIntoDieSlices(diceString)
 		die := convertToDieRollStruct(dieSlices)
-		fmt.Println(die)
+		fmt.Println(getRollTable(die))
 	} else {
 		discordSession.ChannelMessageSend(channelID, "::::?")
 	}
 }
 
+func getRollTable(die dieRoll) []int64 {
+	var rolls []int64
+	seed := time.Now()
+
+	r := rand.New(rand.NewSource(seed.Unix()))
+
+	for int64(len(rolls)) < die.numberOfDie {
+		rolls = append(rolls, (r.Int63n(die.sizeOfDie) + 1))
+	}
+
+	return rolls
+
+}
+
 func isDiceMessageFormated(diceString string) bool {
 	compare, err := regexp.MatchString("[1-9]+[0-9]*d[1-9]+[0-9]*((\\+|-){1}[0-9]*)?", diceString) // todo: fix +- bullshit
+
 	checkError(err)
+
 	if compare {
 		return true
-	} else {
-		return false
 	}
+	return false
 }
 
 func divideIntoDieSlices(dieString string) []string {
