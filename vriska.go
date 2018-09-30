@@ -20,6 +20,13 @@ const (
 	prefix = "vriska:"
 )
 
+type dieRoll struct {
+	numberOfDie  int64
+	sizeOfDie    int64
+	modDirection bool // true positive | false negative
+	modifier     int64
+}
+
 var (
 	// command line argument
 	Token string
@@ -61,6 +68,7 @@ func main() {
 
 	// Open a websocket connection to Discord and begin listening.
 	err = bot.Open()
+
 	if err != nil {
 		fmt.Println("error opening connection,", err)
 		Log.Println("error opening connection,", err)
@@ -91,9 +99,9 @@ func messageCreate(discordSession *discordgo.Session,
 	if message[0] == prefix {
 		switch message[1] {
 		case "roll":
-			discordSession.ChannelMessageSend(discordMessage.ChannelID,
-				strconv.FormatBool(isDiceMessageFormated(message[2])))
-			fmt.Println(convertToDiceArray(message[2]))
+			//		discordSession.ChannelMessageSend(discordMessage.ChannelID,
+			//			strconv.FormatBool(isDiceMessageFormated(message[2])))
+			returnRoll(message[2], discordSession, discordMessage.ChannelID)
 		case "lroll":
 			discordSession.ChannelMessageSend(discordMessage.ChannelID,
 				"placeholder!")
@@ -119,11 +127,24 @@ func messageCreate(discordSession *discordgo.Session,
 	// ... but nobody came
 }
 
-func isDiceMessageFormated(diceString string) bool {
-	compare, err := regexp.MatchString("[0-9]+d[0-9]+((\\+|-)[0-9])?", diceString)
-	if err != nil {
-		Log.Println("error, ", err)
+func returnRoll(diceString string, discordSession *discordgo.Session, channelID string) {
+	valid := true
+	if !isDiceMessageFormated(diceString) {
+		valid = false
 	}
+
+	if valid {
+		dieSlices := divideIntoDieSlices(diceString)
+		die := convertToDieRollStruct(dieSlices)
+		fmt.Println(die)
+	} else {
+		discordSession.ChannelMessageSend(channelID, "::::?")
+	}
+}
+
+func isDiceMessageFormated(diceString string) bool {
+	compare, err := regexp.MatchString("[1-9]+[0-9]*d[1-9]+[0-9]*((\\+|-){1}[0-9]*)?", diceString) // todo: fix +- bullshit
+	checkError(err)
 	if compare {
 		return true
 	} else {
@@ -131,28 +152,50 @@ func isDiceMessageFormated(diceString string) bool {
 	}
 }
 
-func convertToDiceArray(diceString string) []int {
-	// input[0] is the number of dice being rolled
-	// input[1] is the type of die
-	// input[2] is the size of the modifier (0 if none)
-	// input[3] and above are irrelevant
+func divideIntoDieSlices(dieString string) []string {
+	// [0] is the number of dice being rolled
+	// [1] is the type of die
+	// [2] is the modifier direction (positive/negative)
+	// [3] is the size of the modifier (0 if none)
 
-	divider := regexp.MustCompile("(d|\\+|-)")
-	parsedDiceString := divider.FindStringSubmatch(diceString)
+	divider := regexp.MustCompile("[0-9]+|[\\+|-]")
 
-	var DiceStringAsIntArray []int
+	dieSlice := divider.FindAllString(dieString, -1)
 
-	for i, ele := range parsedDiceString {
-		x, err := strconv.ParseInt(ele, 0, 0)
-		DiceStringAsIntArray[i] = int(x)
-		if err != nil {
-			fmt.Println(err)
-			Log.Println(err)
-		}
+	if len(dieSlice) <= 2 {
+		dieSlice = append(dieSlice, "+")
 	}
+	if len(dieSlice) <= 3 {
+		dieSlice = append(dieSlice, "0")
+	}
+	return dieSlice
+}
 
-	return DiceStringAsIntArray
+func convertToDieRollStruct(dieSlice []string) dieRoll {
+	var die dieRoll
+	var err error
+	die.numberOfDie, err = strconv.ParseInt(dieSlice[0], 0, 0)
+	checkError(err)
+	die.sizeOfDie, err = strconv.ParseInt(dieSlice[1], 0, 0)
+	checkError(err)
+	if dieSlice[2] != "-" {
+		die.modDirection = true
+	} else {
+		die.modDirection = false
+	}
+	checkError(err)
+	die.modifier, err = strconv.ParseInt(dieSlice[3], 0, 0)
+	checkError(err)
 
+	return die
+
+}
+
+func checkError(err error) {
+	if err != nil {
+		fmt.Println("error: ", err)
+		Log.Println("error: ", err)
+	}
 }
 
 // converts text to lowercase substrings
