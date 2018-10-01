@@ -99,16 +99,8 @@ func messageCreate(discordSession *discordgo.Session,
 	// commands
 	if message[0] == prefix {
 		switch message[1] {
-		case "roll":
-			//		discordSession.ChannelMessageSend(discordMessage.ChannelID,
-			//			strconv.FormatBool(isDiceMessageFormated(message[2])))
-			returnRoll(message[2], discordSession, discordMessage.ChannelID)
-		case "lroll":
-			discordSession.ChannelMessageSend(discordMessage.ChannelID,
-				"placeholder!")
-		case "hroll":
-			discordSession.ChannelMessageSend(discordMessage.ChannelID,
-				"placeholder!")
+		case "roll", "lroll", "hroll":
+			returnRoll(message[2], discordSession, discordMessage.ChannelID, message[1])
 		case "stats":
 			discordSession.ChannelMessageSend(discordMessage.ChannelID,
 				"placeholder?")
@@ -128,7 +120,7 @@ func messageCreate(discordSession *discordgo.Session,
 	// ... but nobody came
 }
 
-func returnRoll(diceString string, discordSession *discordgo.Session, channelID string) {
+func (diceString string, discordSession *discordgo.Session, channelID string) {
 	valid := true
 	if !isDiceMessageFormated(diceString) {
 		valid = false
@@ -137,13 +129,15 @@ func returnRoll(diceString string, discordSession *discordgo.Session, channelID 
 	if valid {
 		dieSlices := divideIntoDieSlices(diceString)
 		die := convertToDieRollStruct(dieSlices)
-		fmt.Println(getRollTable(die))
+		rollTable := determineRollTable(die)
+
+		return rollTable
 	} else {
 		discordSession.ChannelMessageSend(channelID, "::::?")
 	}
 }
 
-func getRollTable(die dieRoll) []int64 {
+func determineRollTable(die dieRoll) []int64 {
 	var rolls []int64
 	seed := time.Now()
 
