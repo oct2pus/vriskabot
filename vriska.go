@@ -120,21 +120,66 @@ func messageCreate(discordSession *discordgo.Session,
 	// ... but nobody came
 }
 
-func (diceString string, discordSession *discordgo.Session, channelID string) {
+func returnRoll(diceString string, discordSession *discordgo.Session, channelID string, commandInput string) {
 	valid := true
 	if !isDiceMessageFormated(diceString) {
 		valid = false
 	}
 
 	if valid {
+
 		dieSlices := divideIntoDieSlices(diceString)
 		die := convertToDieRollStruct(dieSlices)
 		rollTable := determineRollTable(die)
 
-		return rollTable
+		var result int64
+
+		switch commandInput {
+		case "roll":
+			result = getTotal(rollTable)
+		case "lroll":
+			result = getLowest(rollTable)
+		case "hroll":
+			result = getHighest(rollTable)
+		case "default":
+			discordSession.ChannelMessageSend(channelID, "Something went hoooooooorribly wrong!!!!!!!! ::::(")
+		}
+
 	} else {
 		discordSession.ChannelMessageSend(channelID, "::::?")
 	}
+}
+
+func getTotal(arr []int64) int64 {
+
+	sum := int64(0)
+	for x := 0; x < len(arr); x++ {
+		sum += arr[x]
+	}
+
+	return sum
+}
+
+func getHighest(arr []int64) int64 {
+	highest := int64(0)
+	for x := 0; x < len(arr); x++ {
+		if highest < arr[x] {
+			highest = arr[x]
+		}
+	}
+
+	return highest
+}
+
+func getLowest(arr []int64) int64 {
+	lowest := arr[0]
+	for x := 1; x < len(arr); x++ {
+		if lowest > arr[x] {
+			lowest = arr[x]
+		}
+	}
+
+	return lowest
 }
 
 func determineRollTable(die dieRoll) []int64 {

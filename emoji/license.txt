@@ -1,0 +1,13 @@
+MUTANT STANDARD EMOJI
+0.3.0 (alpha)
+mutant.tech
+
+Published 2018.08.25 (GMT), Modified 2018.10.01 (GMT)
+
+----------------------------------------------------------------------
+
+Made by Dzuk (noct.zone), Modified by Oct2pus (jade.moe)
+
+Mutant Standard emoji are licensed under a Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License. (creativecommons.org/licenses/by-nc-sa/4.0/). All Derivatives are presented under the same Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License. All modified Mutant Standard emoji also include an SVG file.
+
+Please check the license to see what your legal requirements are and to see if using Mutant Standard is right for you.
