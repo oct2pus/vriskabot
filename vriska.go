@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"github.com/bwmarrin/discordgo"
@@ -105,13 +106,13 @@ func messageCreate(discordSession *discordgo.Session,
 	if message[0] == prefix {
 		switch message[1] {
 		case "roll", "lroll", "hroll":
-			embed, err := sendRoll(message[2], discordSession, discordMessage.ChannelID,
-				message[1])
+			embed, err := sendRoll(message[2], message[1])
 			if !checkError(err) {
-				discordSession.ChannelMessageEmbedSend(discordMessage.ChannelID, embed)
+				discordSession.ChannelMessageSend(discordMessage.ChannelID, "Rolling!!!!!!!!")
+				discordSession.ChannelMessageSendEmbed(discordMessage.ChannelID, embed)
 			} else {
 				discordSession.ChannelMessageSend(discordMessage.ChannelID,
-					"You just 8roke me!!!!!!!!")
+					"Format your dice roll right! >::::O\n XXdXX+-XX")
 			}
 		case "stats":
 			discordSession.ChannelMessageSend(discordMessage.ChannelID,
@@ -132,9 +133,10 @@ func messageCreate(discordSession *discordgo.Session,
 	// ... but nobody came
 }
 
-// performs the 'math' for a roll, lroll, or hroll function, returns a MessageEmbed
-func sendRoll(diceString string, discordSession *discordgo.Session,
-	channelID string, commandInput string) (*discordgo.MessageEmbed, error) {
+// performs the 'math' for a roll, lroll, or hroll function, returns a
+// MessageEmbed
+func sendRoll(diceString string, commandInput string) (*discordgo.MessageEmbed,
+	error) {
 
 	valid := true
 	if !isDiceMessageFormated(diceString) {
@@ -157,31 +159,43 @@ func sendRoll(diceString string, discordSession *discordgo.Session,
 		case "hroll":
 			result = getHighest(rollTable)
 		case "default":
-			discordSession.ChannelMessageSend(channelID,
-				"Something went hoooooooorri8ly wrong!!!!!!!! ::::(")
-			return nil, "the roll/hroll/lroll function somehow got called by something that was none of those commands (really weird!)"
+			return nil, errors.New("the roll/hroll/lroll function somehow got called by something that was none of those commands (really weird!)")
 		}
 
 		dieImage := determineDieImage(die)
 
-		getRollEmbed(discordSession, channelID, result, rollTable,
-			commandInput+" "+diceString, dieImage)
-	} else {
-		discordSession.ChannelMessageSend(channelID, "::::?")
-		return nil, "diceString was not formatted properly"
+		embed := &discordgo.MessageEmbed{
+			Color: 0x005682,
+			Type:  "Roooooooolling!",
+			Fields: []*discordgo.MessageEmbedField{
+				&discordgo.MessageEmbedField{
+					Name:   "Rolls",
+					Value:  formatRollTable(rollTable),
+					Inline: true,
+				},
+				&discordgo.MessageEmbedField{
+					Name:   "Modifier",
+					Value:  strconv.FormatInt(die.modifier, 10),
+					Inline: true,
+				},
+				&discordgo.MessageEmbedField{
+					Name:   "Result",
+					Value:  strconv.FormatInt(result, 10),
+					Inline: true,
+				},
+			},
+			Thumbnail: &discordgo.MessageEmbedThumbnail{
+				URL: dieImage,
+			},
+		}
+
+		return embed, nil
 	}
-}
-
-func getRollEmbed(discordSession *discordgo.Session, channelID string, result int64,
-	rollTable []int64, command string, dieImage string) {
-
-	rollTableFormated := formatRollTable(rollTable)
-	fmt.Println(rollTableFormated)
-
+	return nil, errors.New("diceString was not formatted properly")
 }
 
 func formatRollTable(table []int64) string {
-	fieldValue := "`"
+	fieldValue := ""
 	for x := 0; x < len(table); x++ {
 		if x%4 == 0 && x != 0 {
 			fieldValue += "`\n`"
@@ -189,22 +203,23 @@ func formatRollTable(table []int64) string {
 		if x != 0 && x%4 != 0 {
 			fieldValue += "\t"
 		}
-		fieldValue += "|" + // strconv.FormatInt(table[x], 10) + "|"
-			toCenter(strconv.FormatInt(table[x], 10), 4) + "|"
+		fieldValue += "`|" +
+			toCenter(strconv.FormatInt(table[x], 10), 3) + "|`"
 	}
 
-	fieldValue += "`"
+	//fieldValue += "`"
 
 	return fieldValue
 }
 
 // centers text
 func toCenter(s string, i int) string {
+	fmt.Println(len(s))
 	if i > len(s) {
 		o := i - len(s)
 		ns := ""
 
-		ns += spaceLoop(ns, o/2) + s + spaceLoop(ns, o/2)
+		ns += " " + s
 
 		if len(s)%2 == 1 {
 			ns += " "
@@ -219,7 +234,6 @@ func toCenter(s string, i int) string {
 func spaceLoop(s string, i int) string {
 	for x := 0; x < i; x++ {
 		s += " "
-		fmt.Println(s)
 	}
 	return s
 }
