@@ -21,6 +21,7 @@ const (
 	prefix = "vriska:"
 )
 
+// contains all the information about a dice roll
 type dieRoll struct {
 	numberOfDie  int64
 	sizeOfDie    int64
@@ -28,6 +29,7 @@ type dieRoll struct {
 	modifier     int64
 }
 
+// 'global' variables
 var (
 	// command line argument
 	Token string
@@ -36,6 +38,7 @@ var (
 	currentTime string
 )
 
+// initalize variables
 func init() {
 	executable, e := os.Executable()
 	if e != nil {
@@ -55,6 +58,7 @@ func init() {
 	Log = log.New(file, "", log.Ldate|log.Ltime|log.Llongfile|log.LUTC)
 }
 
+// buddy its main
 func main() {
 
 	// Create a new Discord session using the provided bot token.
@@ -101,8 +105,14 @@ func messageCreate(discordSession *discordgo.Session,
 	if message[0] == prefix {
 		switch message[1] {
 		case "roll", "lroll", "hroll":
-			returnRoll(message[2], discordSession, discordMessage.ChannelID,
+			embed, err := sendRoll(message[2], discordSession, discordMessage.ChannelID,
 				message[1])
+			if !checkError(err) {
+				discordSession.ChannelMessageEmbedSend(discordMessage.ChannelID, embed)
+			} else {
+				discordSession.ChannelMessageSend(discordMessage.ChannelID,
+					"You just 8roke me!!!!!!!!")
+			}
 		case "stats":
 			discordSession.ChannelMessageSend(discordMessage.ChannelID,
 				"placeholder?")
@@ -122,8 +132,9 @@ func messageCreate(discordSession *discordgo.Session,
 	// ... but nobody came
 }
 
-func returnRoll(diceString string, discordSession *discordgo.Session,
-	channelID string, commandInput string) {
+// performs the 'math' for a roll, lroll, or hroll function, returns a MessageEmbed
+func sendRoll(diceString string, discordSession *discordgo.Session,
+	channelID string, commandInput string) (*discordgo.MessageEmbed, error) {
 
 	valid := true
 	if !isDiceMessageFormated(diceString) {
@@ -148,6 +159,7 @@ func returnRoll(diceString string, discordSession *discordgo.Session,
 		case "default":
 			discordSession.ChannelMessageSend(channelID,
 				"Something went hoooooooorri8ly wrong!!!!!!!! ::::(")
+			return nil, "the roll/hroll/lroll function somehow got called by something that was none of those commands (really weird!)"
 		}
 
 		dieImage := determineDieImage(die)
@@ -156,11 +168,12 @@ func returnRoll(diceString string, discordSession *discordgo.Session,
 			commandInput+" "+diceString, dieImage)
 	} else {
 		discordSession.ChannelMessageSend(channelID, "::::?")
+		return nil, "diceString was not formatted properly"
 	}
 }
 
 func getRollEmbed(discordSession *discordgo.Session, channelID string, result int64,
-	rollTable []int64, command string, dieImage string) { // *discordgo.MessageEmbed {
+	rollTable []int64, command string, dieImage string) {
 
 	rollTableFormated := formatRollTable(rollTable)
 	fmt.Println(rollTableFormated)
@@ -211,6 +224,7 @@ func spaceLoop(s string, i int) string {
 	return s
 }
 
+// determines what image to use
 func determineDieImage(die dieRoll) string {
 	switch {
 	case die.sizeOfDie <= 4:
@@ -229,6 +243,7 @@ func determineDieImage(die dieRoll) string {
 	return ""
 }
 
+// gets the total value from an int64 slice
 func getTotal(arr []int64) int64 {
 
 	sum := int64(0)
@@ -239,6 +254,7 @@ func getTotal(arr []int64) int64 {
 	return sum
 }
 
+// gets the highest value from an int64 slice
 func getHighest(arr []int64) int64 {
 	highest := int64(0)
 	for x := 0; x < len(arr); x++ {
@@ -250,6 +266,7 @@ func getHighest(arr []int64) int64 {
 	return highest
 }
 
+// gets the lowest value from an int64 slice
 func getLowest(arr []int64) int64 {
 	lowest := arr[0]
 	for x := 1; x < len(arr); x++ {
@@ -261,6 +278,8 @@ func getLowest(arr []int64) int64 {
 	return lowest
 }
 
+// returns a series of random numbers (determined by die.sizeOfDie) in an int64
+// slice, which is as large as die.numberOfDie
 func determineRollTable(die dieRoll) []int64 {
 	var rolls []int64
 	seed := time.Now()
@@ -275,6 +294,7 @@ func determineRollTable(die dieRoll) []int64 {
 
 }
 
+// determines if the diceString input is formatted properly
 func isDiceMessageFormated(diceString string) bool {
 	// todo: fix +- bullshit with regexp
 	compare, err := regexp.MatchString(
@@ -287,6 +307,7 @@ func isDiceMessageFormated(diceString string) bool {
 	return false
 }
 
+// breaks the dieString into a string slice
 func divideIntoDieSlices(dieString string) []string {
 	// [0] is the number of dice being rolled
 	// [1] is the type of die
@@ -306,6 +327,7 @@ func divideIntoDieSlices(dieString string) []string {
 	return dieSlice
 }
 
+// turns the dieSlice string slice into a dieRoll object
 func convertToDieRollStruct(dieSlice []string) dieRoll {
 	var die dieRoll
 	var err error
@@ -326,11 +348,14 @@ func convertToDieRollStruct(dieSlice []string) dieRoll {
 
 }
 
-func checkError(err error) {
+// logs errors
+func checkError(err error) bool {
 	if err != nil {
 		fmt.Println("error: ", err)
 		Log.Println("error: ", err)
+		return true
 	}
+	return false
 }
 
 // converts text to lowercase substrings
