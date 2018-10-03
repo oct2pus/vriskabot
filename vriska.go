@@ -58,7 +58,8 @@ func init() {
 func main() {
 
 	// Create a new Discord session using the provided bot token.
-	bot, err := discordgo.New("Bot " + Token) // token must be prefaced with "Bot "
+	// token must be prefaced with "Bot "
+	bot, err := discordgo.New("Bot " + Token)
 	if err != nil {
 		fmt.Println("error creating Discord session,", err)
 		return
@@ -100,7 +101,8 @@ func messageCreate(discordSession *discordgo.Session,
 	if message[0] == prefix {
 		switch message[1] {
 		case "roll", "lroll", "hroll":
-			returnRoll(message[2], discordSession, discordMessage.ChannelID, message[1])
+			returnRoll(message[2], discordSession, discordMessage.ChannelID,
+				message[1])
 		case "stats":
 			discordSession.ChannelMessageSend(discordMessage.ChannelID,
 				"placeholder?")
@@ -120,7 +122,9 @@ func messageCreate(discordSession *discordgo.Session,
 	// ... but nobody came
 }
 
-func returnRoll(diceString string, discordSession *discordgo.Session, channelID string, commandInput string) {
+func returnRoll(diceString string, discordSession *discordgo.Session,
+	channelID string, commandInput string) {
+
 	valid := true
 	if !isDiceMessageFormated(diceString) {
 		valid = false
@@ -142,12 +146,87 @@ func returnRoll(diceString string, discordSession *discordgo.Session, channelID 
 		case "hroll":
 			result = getHighest(rollTable)
 		case "default":
-			discordSession.ChannelMessageSend(channelID, "Something went hoooooooorribly wrong!!!!!!!! ::::(")
+			discordSession.ChannelMessageSend(channelID,
+				"Something went hoooooooorri8ly wrong!!!!!!!! ::::(")
 		}
 
+		dieImage := determineDieImage(die)
+
+		getRollEmbed(discordSession, channelID, result, rollTable,
+			commandInput+" "+diceString, dieImage)
 	} else {
 		discordSession.ChannelMessageSend(channelID, "::::?")
 	}
+}
+
+func getRollEmbed(discordSession *discordgo.Session, channelID string, result int64,
+	rollTable []int64, command string, dieImage string) { // *discordgo.MessageEmbed {
+
+	rollTableFormated := formatRollTable(rollTable)
+	fmt.Println(rollTableFormated)
+
+}
+
+func formatRollTable(table []int64) string {
+	fieldValue := "`"
+	for x := 0; x < len(table); x++ {
+		if x%4 == 0 && x != 0 {
+			fieldValue += "`\n`"
+		}
+		if x != 0 && x%4 != 0 {
+			fieldValue += "\t"
+		}
+		fieldValue += "|" + // strconv.FormatInt(table[x], 10) + "|"
+			toCenter(strconv.FormatInt(table[x], 10), 4) + "|"
+	}
+
+	fieldValue += "`"
+
+	return fieldValue
+}
+
+// centers text
+func toCenter(s string, i int) string {
+	if i > len(s) {
+		o := i - len(s)
+		ns := ""
+
+		ns += spaceLoop(ns, o/2) + s + spaceLoop(ns, o/2)
+
+		if len(s)%2 == 1 {
+			ns += " "
+		}
+
+		return ns
+	}
+	return s
+}
+
+// adds 'i' spaces to string 's'
+func spaceLoop(s string, i int) string {
+	for x := 0; x < i; x++ {
+		s += " "
+		fmt.Println(s)
+	}
+	return s
+}
+
+func determineDieImage(die dieRoll) string {
+	switch {
+	case die.sizeOfDie <= 4:
+		return "https://raw.githubusercontent.com/oct2pus/vriskabot/master/emoji/d4.png"
+	case die.sizeOfDie <= 6:
+		return "https://raw.githubusercontent.com/oct2pus/vriskabot/master/emoji/d6.png"
+	case die.sizeOfDie <= 8:
+		return "https://raw.githubusercontent.com/oct2pus/vriskabot/master/emoji/d8.png"
+	case die.sizeOfDie <= 10:
+		return "https://raw.githubusercontent.com/oct2pus/vriskabot/master/emoji/d10.png"
+	case die.sizeOfDie <= 12:
+		return "https://raw.githubusercontent.com/oct2pus/vriskabot/master/emoji/d12.png"
+	case die.sizeOfDie > 12:
+		return "https://raw.githubusercontent.com/oct2pus/vriskabot/master/emoji/d20.png"
+	}
+	return ""
 }
 
 func getTotal(arr []int64) int64 {
@@ -197,8 +276,9 @@ func determineRollTable(die dieRoll) []int64 {
 }
 
 func isDiceMessageFormated(diceString string) bool {
-	compare, err := regexp.MatchString("[1-9]+[0-9]*d[1-9]+[0-9]*((\\+|-){1}[0-9]*)?", diceString) // todo: fix +- bullshit
-
+	// todo: fix +- bullshit with regexp
+	compare, err := regexp.MatchString(
+		"[1-9]+[0-9]*d[1-9]+[0-9]*((\\+|-){1}[0-9]*)?", diceString)
 	checkError(err)
 
 	if compare {
