@@ -195,7 +195,7 @@ func sendRoll(diceString string, commandInput string) (*discordgo.MessageEmbed,
 }
 
 func formatRollTable(table []int64) string {
-	fieldValue := ""
+	fieldValue := "`"
 	for x := 0; x < len(table); x++ {
 		if x%4 == 0 && x != 0 {
 			fieldValue += "`\n`"
@@ -203,27 +203,35 @@ func formatRollTable(table []int64) string {
 		if x != 0 && x%4 != 0 {
 			fieldValue += "\t"
 		}
-		fieldValue += "`|" +
-			toCenter(strconv.FormatInt(table[x], 10), 3) + "|`"
+		fieldValue += "|" +
+			toCenter(strconv.FormatInt(table[x], 10)) + "|"
 	}
 
-	//fieldValue += "`"
+	fieldValue += "`"
 
 	return fieldValue
 }
 
 // centers text
+// im doing this the shitty not expandable way because ive been defeated
+func toCenter(s string) string {
+	switch len(s) {
+	case 1:
+		return " " + s + " "
+	case 2:
+		return " " + s
+	default:
+		return s
+	}
+}
+
+/*
+// centers text, properly, but for some reason throws a hissy fit if i use
+// spaces
 func toCenter(s string, i int) string {
-	fmt.Println(len(s))
 	if i > len(s) {
 		o := i - len(s)
-		ns := ""
-
-		ns += " " + s
-
-		if len(s)%2 == 1 {
-			ns += " "
-		}
+		ns := spaceLoop("", o) + s
 
 		return ns
 	}
@@ -232,12 +240,13 @@ func toCenter(s string, i int) string {
 
 // adds 'i' spaces to string 's'
 func spaceLoop(s string, i int) string {
-	for x := 0; x < i; x++ {
-		s += " "
+
+	for len(s) < i {
+		s += "_"
 	}
 	return s
 }
-
+*/
 // determines what image to use
 func determineDieImage(die dieRoll) string {
 	switch {
