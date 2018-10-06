@@ -147,7 +147,7 @@ func messageCreate(discordSession *discordgo.Session,
 	for _, ele := range discordMessage.Mentions {
 		if ele.Username == self.Username {
 			discordSession.ChannelMessageSend(discordMessage.ChannelID,
-				"Hiiiiiiii?\n8y the way my prefix is '`vriska: `'. Not that you neeeeeeeeded to know or anythng.")
+				"Hiiiiiiii?\n8y the way my prefix is '`vriska: `'. Not that you neeeeeeeeded to know or anything.")
 		}
 	}
 }
