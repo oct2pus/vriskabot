@@ -110,7 +110,7 @@ func messageCreate(discordSession *discordgo.Session,
 		return
 	}
 	// commands
-	if message[0] == prefix {
+	if message[0] == prefix && len(message) > 1 {
 		switch message[1] {
 		case "roll", "lroll", "hroll":
 			if len(message) > 2 {
