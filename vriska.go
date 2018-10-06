@@ -36,6 +36,7 @@ var (
 	// error logging
 	Log         *log.Logger
 	currentTime string
+	self        *discordgo.User
 )
 
 // initalize variables
@@ -69,8 +70,9 @@ func main() {
 		return
 	}
 
-	// Register the messageCreate func as a callback for MessageCreate events.
+	// Bot Event Handlers
 	bot.AddHandler(messageCreate)
+	bot.AddHandler(ready)
 
 	// Open a websocket connection to Discord and begin listening.
 	err = bot.Open()
@@ -89,6 +91,12 @@ func main() {
 
 	// Cleanly close down the Discord session.
 	bot.Close()
+}
+
+// This function is called when the bot connects to discord
+func ready(discordSession *discordgo.Session, discordReady *discordgo.Ready) {
+	discordSession.UpdateStatus(0, "prefix: \""+prefix+" \"")
+	self = discordReady.User
 }
 
 // This function will be called (due to AddHandler above) every time a new
@@ -136,8 +144,12 @@ func messageCreate(discordSession *discordgo.Session,
 		}
 	}
 
-	// text responses
-	// ... but nobody came
+	for _, ele := range discordMessage.Mentions {
+		if ele.Username == self.Username {
+			discordSession.ChannelMessageSend(discordMessage.ChannelID,
+				"Hiiiiiiii?\n8y the way my prefix is '`vriska: `'. Not that you neeeeeeeeded to know or anythng.")
+		}
+	}
 }
 
 func getCredits() *discordgo.MessageEmbed {
@@ -147,7 +159,7 @@ func getCredits() *discordgo.MessageEmbed {
 		Fields: []*discordgo.MessageEmbedField{
 			&discordgo.MessageEmbedField{
 				Name:   "Vriska8ot",
-				Value:  "Created by \\🐙\\🐙#0413 ( http://oct2pus.tumblr.com/ )\nVriska8ot uses discordGo library\n( https://github.com/bwmarrin/discordgo/ )",
+				Value:  "Created by \\🐙\\🐙#0413 ( http://oct2pus.tumblr.com/ )\nVriska8ot uses the 'discordgo' library\n( https://github.com/bwmarrin/discordgo/ )",
 				Inline: false,
 			},
 			&discordgo.MessageEmbedField{
