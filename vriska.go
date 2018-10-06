@@ -122,6 +122,9 @@ func messageCreate(discordSession *discordgo.Session,
 		case "discord":
 			discordSession.ChannelMessageSend(discordMessage.ChannelID,
 				"https://discord.gg/PGVh2M8")
+		case "invite":
+			discordSession.ChannelMessageSend(discordMessage.ChannelID,
+				"<https://discordapp.com/oauth2/authorize?client_id=497943811700424704&scope=bot&permissions=281600>")
 		default:
 			discordSession.ChannelMessageSend(discordMessage.ChannelID,
 				"::::?")
