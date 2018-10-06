@@ -125,6 +125,11 @@ func messageCreate(discordSession *discordgo.Session,
 		case "invite":
 			discordSession.ChannelMessageSend(discordMessage.ChannelID,
 				"<https://discordapp.com/oauth2/authorize?client_id=497943811700424704&scope=bot&permissions=281600>")
+		case "help", "commands":
+			discordSession.ChannelMessageSend(discordMessage.ChannelID,
+				"My help is currently incomplete, 8ut my commands are:\n`roll`\n`lroll`\n`hroll`\n`discord`\n`invite`\n`help`\n`about`")
+		case "about", "credits":
+			discordSession.ChannelMessageSendEmbed(discordMessage.ChannelID, getCredits())
 		default:
 			discordSession.ChannelMessageSend(discordMessage.ChannelID,
 				"::::?")
@@ -133,6 +138,35 @@ func messageCreate(discordSession *discordgo.Session,
 
 	// text responses
 	// ... but nobody came
+}
+
+func getCredits() *discordgo.MessageEmbed {
+	embed := &discordgo.MessageEmbed{
+		Color: 0x005682,
+		Type:  "A8out",
+		Fields: []*discordgo.MessageEmbedField{
+			&discordgo.MessageEmbedField{
+				Name:   "Vriska8ot",
+				Value:  "Created by \\🐙\\🐙#0413 ( http://oct2pus.tumblr.com/ )\nVriska8ot uses discordGo library\n( https://github.com/bwmarrin/discordgo/ )",
+				Inline: false,
+			},
+			&discordgo.MessageEmbedField{
+				Name:   "Special Thanks",
+				Value:  "Avatar By mjölk#8323 ( http://cosmic-rumpus.tumblr.com/ )\nEmojis by Dzuk#1671",
+				Inline: false,
+			},
+			&discordgo.MessageEmbedField{
+				Name:   "Disclaimer",
+				Value:  "Vriska8ot uses **Mutant Standard Emoji** (https://mutant.tech)\n**Mutant Standard Emoji** are licensed under CC-BY-NC-SA 4.0 (https://creativecommons.org/licenses/by-nc-sa/4.0/) ",
+				Inline: false,
+			},
+		},
+		Thumbnail: &discordgo.MessageEmbedThumbnail{
+			URL: "https://raw.githubusercontent.com/oct2pus/vriskabot/master/art/avatar.png",
+		},
+	}
+
+	return embed
 }
 
 // performs the 'math' for a roll, lroll, or hroll function, returns a
