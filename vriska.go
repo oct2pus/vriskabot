@@ -52,7 +52,7 @@ func init() {
 	flag.Parse()
 	// error logging
 	currentTime = time.Now().Format("2006-01-02@15h04m")
-	file, err := os.Create(path + "logs@" + currentTime + ".log")
+	file, err := os.Create(path + ".logs@" + currentTime + ".log")
 	if err != nil {
 		panic(err)
 	}
@@ -113,13 +113,17 @@ func messageCreate(discordSession *discordgo.Session,
 	if message[0] == prefix {
 		switch message[1] {
 		case "roll", "lroll", "hroll":
-			embed, err := sendRoll(message[2], message[1])
-			if !checkError(err) {
-				discordSession.ChannelMessageSend(discordMessage.ChannelID, "Rolling!!!!!!!!")
-				discordSession.ChannelMessageSendEmbed(discordMessage.ChannelID, embed)
+			if len(message) > 2 {
+				embed, err := sendRoll(message[2], message[1])
+				if !checkError(err) {
+					discordSession.ChannelMessageSend(discordMessage.ChannelID, "Rolling!!!!!!!!")
+					discordSession.ChannelMessageSendEmbed(discordMessage.ChannelID, embed)
+				} else {
+					discordSession.ChannelMessageSend(discordMessage.ChannelID,
+						err.Error())
+				}
 			} else {
-				discordSession.ChannelMessageSend(discordMessage.ChannelID,
-					err.Error())
+				discordSession.ChannelMessageSend(discordMessage.ChannelID, "Roll what?")
 			}
 		case "stats":
 			discordSession.ChannelMessageSend(discordMessage.ChannelID,
