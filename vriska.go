@@ -111,7 +111,7 @@ func messageCreate(discordSession *discordgo.Session,
 				discordSession.ChannelMessageSendEmbed(discordMessage.ChannelID, embed)
 			} else {
 				discordSession.ChannelMessageSend(discordMessage.ChannelID,
-					"Format your dice roll right! >::::O\n XXdXX+-XX")
+					err.Error())
 			}
 		case "stats":
 			discordSession.ChannelMessageSend(discordMessage.ChannelID,
@@ -151,6 +151,10 @@ func sendRoll(diceString string, commandInput string) (*discordgo.MessageEmbed,
 		die := convertToDieRollStruct(dieSlices)
 		rollTable := determineRollTable(die)
 
+		if die.numberOfDie > 20 {
+			return nil, errors.New("Why would anyone ever need to roll that many dice?")
+		}
+
 		var result int64
 
 		switch commandInput {
@@ -161,7 +165,7 @@ func sendRoll(diceString string, commandInput string) (*discordgo.MessageEmbed,
 		case "hroll":
 			result = getHighest(rollTable)
 		case "default":
-			return nil, errors.New("the sendRoll function got called in a weird way.")
+			return nil, errors.New("Holy sh8t don't 8reak me!!!!!!!!")
 		}
 
 		result += die.modifier
@@ -195,7 +199,7 @@ func sendRoll(diceString string, commandInput string) (*discordgo.MessageEmbed,
 
 		return embed, nil
 	}
-	return nil, errors.New("diceString was not formatted properly")
+	return nil, errors.New("You gotta format it like this!\n`vriska: roll XdX(+/-X)`")
 }
 
 func formatRollTable(table []int64) string {
