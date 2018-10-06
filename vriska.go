@@ -24,10 +24,9 @@ const (
 
 // contains all the information about a dice roll
 type dieRoll struct {
-	numberOfDie  int64
-	sizeOfDie    int64
-	modDirection bool // true positive | false negative
-	modifier     int64
+	numberOfDie int64
+	sizeOfDie   int64
+	modifier    int64
 }
 
 // 'global' variables
@@ -159,8 +158,10 @@ func sendRoll(diceString string, commandInput string) (*discordgo.MessageEmbed,
 		case "hroll":
 			result = getHighest(rollTable)
 		case "default":
-			return nil, errors.New("the roll/hroll/lroll function somehow got called by something that was none of those commands (really weird!)")
+			return nil, errors.New("the sendRoll function got called in a weird way.")
 		}
+
+		result += die.modifier
 
 		dieImage := determineDieImage(die)
 
@@ -358,14 +359,14 @@ func convertToDieRollStruct(dieSlice []string) dieRoll {
 	checkError(err)
 	die.sizeOfDie, err = strconv.ParseInt(dieSlice[1], 0, 0)
 	checkError(err)
-	if dieSlice[2] != "-" {
-		die.modDirection = true
-	} else {
-		die.modDirection = false
-	}
-	checkError(err)
+
 	die.modifier, err = strconv.ParseInt(dieSlice[3], 0, 0)
 	checkError(err)
+
+	// if number is negative is negative
+	if dieSlice[2] == "-" {
+		die.modifier = 0 - die.modifier
+	}
 
 	return die
 
