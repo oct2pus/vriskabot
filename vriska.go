@@ -127,10 +127,13 @@ func messageCreate(discordSession *discordgo.Session,
 			} else {
 				discordSession.ChannelMessageSend(discordMessage.ChannelID, "Roll what?")
 			}
+		case "fortune", "8ball":
+			discordSession.ChannelMessageSend(discordMessage.ChannelID,
+				"w8 a moment ::::)")
 		case "stats":
 			discordSession.ChannelMessageSend(discordMessage.ChannelID,
 				"placeholder?")
-		case "fate":
+		case "fate", "f8":
 			discordSession.ChannelMessageSend(discordMessage.ChannelID,
 				"placeholder?!")
 		case "discord":
@@ -170,7 +173,7 @@ func getCredits() *discordgo.MessageEmbed {
 			},
 			&discordgo.MessageEmbedField{
 				Name:   "Special Thanks",
-				Value:  "Avatar By mjölk#8323 ( http://cosmic-rumpus.tumblr.com/ )\nEmojis by Dzuk#1671",
+				Value:  "Avatar By mjölk#8323 ( http://cosmic-rumpus.tumblr.com/ )\nEmojis by Dzuk#1671 ( https://noct.zone/ )",
 				Inline: false,
 			},
 			&discordgo.MessageEmbedField{
