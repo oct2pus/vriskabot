@@ -1,3 +1,5 @@
+//Check Line 259 Dummy
+
 package main
 
 import (
@@ -132,10 +134,23 @@ func messageCreate(discordSession *discordgo.Session,
 				"w8 a moment ::::)")
 		case "stats":
 			discordSession.ChannelMessageSend(discordMessage.ChannelID,
-				"placeholder?")
+				"place(8e)holder?")
 		case "fate", "f8":
-			discordSession.ChannelMessageSend(discordMessage.ChannelID,
-				"placeholder?!")
+			var embed *discordgo.MessageEmbed
+			var err error
+
+			if len(message) > 2 {
+				embed, err = sendF8Roll(message[2])
+			} else {
+				embed, err = sendF8Roll("0")
+			}
+			if err != nil {
+				discordSession.ChannelMessageSend(discordMessage.ChannelID,
+					err.Error())
+			} else {
+				discordSession.ChannelMessageSend(discordMessage.ChannelID, "Rolling!!!!!!!!")
+				discordSession.ChannelMessageSendEmbed(discordMessage.ChannelID, embed)
+			}
 		case "discord":
 			discordSession.ChannelMessageSend(discordMessage.ChannelID,
 				"https://discord.gg/PGVh2M8")
@@ -161,6 +176,50 @@ func messageCreate(discordSession *discordgo.Session,
 	}
 }
 
+// for sending dice rolls related to the game f8
+func sendF8Roll(modifier string) (*discordgo.MessageEmbed, error) {
+
+	roll := dieRoll{4, 3, 0}
+	if modifier != "" && parseF8Mod(modifier) {
+		mod, err := strconv.ParseInt(modifier, 10, 64)
+		checkError(err)
+		roll.modifier = mod
+	} else if modifier != "" {
+		return nil, errors.New("W8 what?")
+	}
+
+	rolls := determineRollTable(roll)
+
+	// fate rolls are actually -1 to 1, not 1 to 3
+	for i, _ := range rolls {
+		rolls[i] -= 2
+	}
+
+	var f8Rolls []string
+
+	for _, ele := range rolls {
+		f8Rolls = append(f8Rolls, toF8DieSymbol(ele))
+	}
+
+	total := strconv.FormatInt(getTotal(rolls), 10)
+
+	dieImage := "https://raw.githubusercontent.com/oct2pus/vriskabot/master/emoji/dfate.png"
+
+	return dieRollEmbed(f8Rolls, strconv.FormatInt(roll.modifier, 10), total, dieImage), nil
+}
+
+func parseF8Mod(i string) bool {
+	compare, err := regexp.MatchString(
+		"(\\+|-)?[0-9]*", i)
+	checkError(err)
+
+	if compare {
+		return true
+	}
+	return false
+
+}
+
 func getCredits() *discordgo.MessageEmbed {
 	embed := &discordgo.MessageEmbed{
 		Color: 0x005682,
@@ -178,7 +237,7 @@ func getCredits() *discordgo.MessageEmbed {
 			},
 			&discordgo.MessageEmbedField{
 				Name:   "Disclaimer",
-				Value:  "Vriska8ot uses **Mutant Standard Emoji** (https://mutant.tech)\n**Mutant Standard Emoji** are licensed under CC-BY-NC-SA 4.0 (https://creativecommons.org/licenses/by-nc-sa/4.0/) ",
+				Value:  "Vriska8ot uses **Mutant Standard Emoji** (https://mutant.tech)\n**Mutant Standard Emoji** are licensed under CC-BY-NC-SA 4.0 (https://creativecommons.org/licenses/by-nc-sa/4.0/)",
 				Inline: false,
 			},
 		},
@@ -200,18 +259,21 @@ func sendRoll(diceString string, commandInput string) (*discordgo.MessageEmbed,
 		valid = false
 	}
 
+	// This is called valid because the internet has made a fool of me.
 	if valid {
 
 		dieSlices := divideIntoDieSlices(diceString)
 		die := convertToDieRollStruct(dieSlices)
-		rollTable := determineRollTable(die)
 
 		if die.numberOfDie > 20 {
 			return nil, errors.New("Why would anyone ever need to roll that many dice?")
 		}
 
+		rollTable := determineRollTable(die)
+		var rollTableAsStringSlice []string
 		var result int64
 
+		// get result
 		switch commandInput {
 		case "roll":
 			result = getTotal(rollTable)
@@ -225,39 +287,68 @@ func sendRoll(diceString string, commandInput string) (*discordgo.MessageEmbed,
 
 		result += die.modifier
 
+		//convert int slice to string slice
+
+		for i, ele := range rollTable {
+			rollTableAsStringSlice[i] = strconv.FormatInt(ele, 10)
+		}
+
 		dieImage := determineDieImage(die)
 
-		embed := &discordgo.MessageEmbed{
-			Color: 0x005682,
-			Type:  "Roooooooolling!",
-			Fields: []*discordgo.MessageEmbedField{
-				&discordgo.MessageEmbedField{
-					Name:   "Rolls",
-					Value:  formatRollTable(rollTable),
-					Inline: true,
-				},
-				&discordgo.MessageEmbedField{
-					Name:   "Modifier",
-					Value:  strconv.FormatInt(die.modifier, 10),
-					Inline: true,
-				},
-				&discordgo.MessageEmbedField{
-					Name:   "Result",
-					Value:  strconv.FormatInt(result, 10),
-					Inline: true,
-				},
-			},
-			Thumbnail: &discordgo.MessageEmbedThumbnail{
-				URL: dieImage,
-			},
-		}
+		embed := dieRollEmbed(rollTableAsStringSlice,
+			strconv.FormatInt(die.modifier, 10), strconv.FormatInt(result, 10),
+			dieImage)
 
 		return embed, nil
 	}
+
 	return nil, errors.New("You gotta format it like this!\n`vriska: roll XdX(+/-X)`")
 }
 
-func formatRollTable(table []int64) string {
+// I stopped at rewriting embeds so they can be multi use
+func dieRollEmbed(rollTable []string, mod string, result string, dieImage string) *discordgo.MessageEmbed {
+	embed := &discordgo.MessageEmbed{
+		Color: 0x005682,
+		Type:  "Roooooooolling!",
+		Fields: []*discordgo.MessageEmbedField{
+			&discordgo.MessageEmbedField{
+				Name:   "Rolls",
+				Value:  formatRollTable(rollTable),
+				Inline: true,
+			},
+			&discordgo.MessageEmbedField{
+				Name:   "Modifier",
+				Value:  mod,
+				Inline: true,
+			},
+			&discordgo.MessageEmbedField{
+				Name:   "Result",
+				Value:  result,
+				Inline: true,
+			},
+		},
+		Thumbnail: &discordgo.MessageEmbedThumbnail{
+			URL: dieImage,
+		},
+	}
+
+	return embed
+}
+
+func toF8DieSymbol(i int64) string {
+	switch i {
+	case int64(-1):
+		return "-"
+	case int64(0):
+		return "0"
+	case int64(1):
+		return "+"
+	default:
+		return "Oh gog."
+	}
+}
+
+func formatRollTable(table []string) string {
 	fieldValue := "`"
 	for x := 0; x < len(table); x++ {
 		if x%4 == 0 && x != 0 {
@@ -267,7 +358,7 @@ func formatRollTable(table []int64) string {
 			fieldValue += "\t"
 		}
 		fieldValue += "|" +
-			toCenter(strconv.FormatInt(table[x], 10)) + "|"
+			toCenter(table[x]) + "|"
 	}
 
 	fieldValue += "`"
@@ -310,6 +401,7 @@ func spaceLoop(s string, i int) string {
 	return s
 }
 */
+
 // determines what image to use
 func determineDieImage(die dieRoll) string {
 	switch {
