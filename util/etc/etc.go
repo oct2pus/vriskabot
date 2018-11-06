@@ -1,7 +1,7 @@
 package etc
 
 import (
-	"fmt"
+	"strings"
 )
 
 // converts text to lowercase substrings
