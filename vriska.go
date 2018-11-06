@@ -7,6 +7,10 @@ import (
 	"flag"
 	"fmt"
 	"github.com/bwmarrin/discordgo"
+	"github.com/oct2pus/vriskabot/util/etc"
+	"github.com/oct2pus/vriskabot/util/logging"
+	"github.com/oct2pus/vriskabot/util/parse"
+	"github.com/oct2pus/vriskabot/util/roll"
 	"log"
 	"math/rand"
 	"os"
@@ -25,20 +29,13 @@ const (
 )
 
 // contains all the information about a dice roll
-type dieRoll struct {
-	numberOfDie int64
-	sizeOfDie   int64
-	modifier    int64
-}
 
 // 'global' variables
 var (
 	// command line argument
 	Token string
-	// error logging
-	Log         *log.Logger
-	currentTime string
-	self        *discordgo.User
+
+	self *discordgo.User
 )
 
 // initalize variables
@@ -47,18 +44,12 @@ func init() {
 	if e != nil {
 		panic(e)
 	}
-	path := filepath.Dir(executable)
-
 	// command line argument
 	flag.StringVar(&Token, "t", "", "Bot Token")
 	flag.Parse()
+
 	// error logging
-	currentTime = time.Now().Format("2006-01-02@15h04m")
-	file, err := os.Create(path + ".logs@" + currentTime + ".log")
-	if err != nil {
-		panic(err)
-	}
-	Log = log.New(file, "", log.Ldate|log.Ltime|log.Llongfile|log.LUTC)
+	logging.CreateLog()
 }
 
 // buddy its main
@@ -119,7 +110,7 @@ func messageCreate(discordSession *discordgo.Session,
 		case "roll", "lroll", "hroll":
 			if len(message) > 2 {
 				embed, err := sendRoll(message[2], message[1])
-				if !checkError(err) {
+				if !logging.CheckError(err) {
 					discordSession.ChannelMessageSend(discordMessage.ChannelID, "Rolling!!!!!!!!")
 					discordSession.ChannelMessageSendEmbed(discordMessage.ChannelID, embed)
 				} else {
@@ -176,19 +167,19 @@ func messageCreate(discordSession *discordgo.Session,
 	}
 }
 
-// for sending dice rolls related to the game f8
+// for sending dice rolls related to the game fate
 func sendF8Roll(modifier string) (*discordgo.MessageEmbed, error) {
 
-	roll := dieRoll{4, 3, 0}
-	if modifier != "" && parseF8Mod(modifier) {
+	f8 := roll.new(4, 3, 0)
+	if modifier != "" && parse.CheckFormated(modifier, "(\\+|-)?[0-9]*") {
 		mod, err := strconv.ParseInt(modifier, 10, 64)
-		checkError(err)
-		roll.modifier = mod
+		logging.CheckError(err)
+		roll.Mod = mod
 	} else if modifier != "" {
 		return nil, errors.New("W8 what?")
 	}
 
-	rolls := determineRollTable(roll)
+	table := roll.RollTable(f8)
 
 	// fate rolls are actually -1 to 1, not 1 to 3
 	for i, _ := range rolls {
@@ -211,7 +202,7 @@ func sendF8Roll(modifier string) (*discordgo.MessageEmbed, error) {
 func parseF8Mod(i string) bool {
 	compare, err := regexp.MatchString(
 		"(\\+|-)?[0-9]*", i)
-	checkError(err)
+	logging.CheckError(err)
 
 	if compare {
 		return true
@@ -255,22 +246,23 @@ func sendRoll(diceString string, commandInput string) (*discordgo.MessageEmbed,
 	error) {
 
 	valid := true
-	if !isDiceMessageFormated(diceString) {
+	if !parse.CheckFormatted(diceString,
+		"[1-9]+[0-9]*d[1-9]+[0-9]*((\\+|-){1}[0-9]*)?") {
 		valid = false
 	}
 
 	// This is called valid because the internet has made a fool of me.
 	if valid {
 
-		dieSlices := divideIntoDieSlices(diceString)
-		die := convertToDieRollStruct(dieSlices)
+		dieSlices := roll.DiceSlice(diceString)
+		dice := roll.FromStrings(dieSlices)
 
-		if die.numberOfDie > 20 {
+		if dice.Amount > 20 {
 			return nil, errors.New("Why would anyone ever need to roll that many dice?")
 		}
 
-		rollTable := determineRollTable(die)
-		var rollTableAsStringSlice []string
+		rollTable := roll.RollTable(die)
+		var stringTable []string
 		var result int64
 
 		// get result
@@ -285,18 +277,18 @@ func sendRoll(diceString string, commandInput string) (*discordgo.MessageEmbed,
 			return nil, errors.New("Holy sh8t don't 8reak me!!!!!!!!")
 		}
 
-		result += die.modifier
+		result += dice.Mod
 
 		//convert int slice to string slice
 
 		for i, ele := range rollTable {
-			rollTableAsStringSlice[i] = strconv.FormatInt(ele, 10)
+			stringTable[i] = strconv.FormatInt(ele, 10)
 		}
 
-		dieImage := determineDieImage(die)
+		dieImage := determineDieImage(dice)
 
-		embed := dieRollEmbed(rollTableAsStringSlice,
-			strconv.FormatInt(die.modifier, 10), strconv.FormatInt(result, 10),
+		embed := dieRollEmbed(stringTable,
+			strconv.FormatInt(dice.Mod, 10), strconv.FormatInt(result, 10),
 			dieImage)
 
 		return embed, nil
@@ -306,7 +298,9 @@ func sendRoll(diceString string, commandInput string) (*discordgo.MessageEmbed,
 }
 
 // I stopped at rewriting embeds so they can be multi use
-func dieRollEmbed(rollTable []string, mod string, result string, dieImage string) *discordgo.MessageEmbed {
+func dieRollEmbed(rollTable []string, mod string, result string,
+	dieImage string) *discordgo.MessageEmbed {
+
 	embed := &discordgo.MessageEmbed{
 		Color: 0x005682,
 		Type:  "Roooooooolling!",
@@ -348,6 +342,7 @@ func toF8DieSymbol(i int64) string {
 	}
 }
 
+// Takes roll table and returns a
 func formatRollTable(table []string) string {
 	fieldValue := "`"
 	for x := 0; x < len(table); x++ {
@@ -365,42 +360,6 @@ func formatRollTable(table []string) string {
 
 	return fieldValue
 }
-
-// centers text
-// im doing this the shitty not expandable way because ive been defeated
-func toCenter(s string) string {
-	switch len(s) {
-	case 1:
-		return " " + s + " "
-	case 2:
-		return " " + s
-	default:
-		return s
-	}
-}
-
-/*
-// centers text, properly, but for some reason throws a hissy fit if i use
-// spaces
-func toCenter(s string, i int) string {
-	if i > len(s) {
-		o := i - len(s)
-		ns := spaceLoop("", o) + s
-
-		return ns
-	}
-	return s
-}
-
-// adds 'i' spaces to string 's'
-func spaceLoop(s string, i int) string {
-
-	for len(s) < i {
-		s += "_"
-	}
-	return s
-}
-*/
 
 // determines what image to use
 func determineDieImage(die dieRoll) string {
@@ -456,89 +415,15 @@ func getLowest(arr []int64) int64 {
 	return lowest
 }
 
-// returns a series of random numbers (determined by die.sizeOfDie) in an int64
-// slice, which is as large as die.numberOfDie
-func determineRollTable(die dieRoll) []int64 {
-	var rolls []int64
-	seed := time.Now()
-
-	r := rand.New(rand.NewSource(seed.Unix()))
-
-	for int64(len(rolls)) < die.numberOfDie {
-		rolls = append(rolls, (r.Int63n(die.sizeOfDie) + 1))
-	}
-
-	return rolls
-
-}
-
 // determines if the diceString input is formatted properly
 func isDiceMessageFormated(diceString string) bool {
 	// todo: fix +- bullshit with regexp
 	compare, err := regexp.MatchString(
 		"[1-9]+[0-9]*d[1-9]+[0-9]*((\\+|-){1}[0-9]*)?", diceString)
-	checkError(err)
+	logging.CheckError(err)
 
 	if compare {
 		return true
 	}
 	return false
-}
-
-// breaks the dieString into a string slice
-func divideIntoDieSlices(dieString string) []string {
-	// [0] is the number of dice being rolled
-	// [1] is the type of die
-	// [2] is the modifier direction (positive/negative)
-	// [3] is the size of the modifier (0 if none)
-
-	divider := regexp.MustCompile("[0-9]+|[\\+|-]")
-
-	dieSlice := divider.FindAllString(dieString, -1)
-
-	if len(dieSlice) <= 2 {
-		dieSlice = append(dieSlice, "+")
-	}
-	if len(dieSlice) <= 3 {
-		dieSlice = append(dieSlice, "0")
-	}
-	return dieSlice
-}
-
-// turns the dieSlice string slice into a dieRoll object
-func convertToDieRollStruct(dieSlice []string) dieRoll {
-	var die dieRoll
-	var err error
-	die.numberOfDie, err = strconv.ParseInt(dieSlice[0], 0, 0)
-	checkError(err)
-	die.sizeOfDie, err = strconv.ParseInt(dieSlice[1], 0, 0)
-	checkError(err)
-
-	die.modifier, err = strconv.ParseInt(dieSlice[3], 0, 0)
-	checkError(err)
-
-	// if number is negative is negative
-	if dieSlice[2] == "-" {
-		die.modifier = 0 - die.modifier
-	}
-
-	return die
-
-}
-
-// logs errors
-func checkError(err error) bool {
-	if err != nil {
-		fmt.Println("error: ", err)
-		Log.Println("error: ", err)
-		return true
-	}
-	return false
-}
-
-// converts text to lowercase substrings
-func parseText(m string) []string {
-
-	m = strings.ToLower(m)
-	return strings.Split(m, " ")
 }

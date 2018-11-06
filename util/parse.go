@@ -1,7 +1,7 @@
 package parse
 
 import (
-	"./logging"
+	"github.com/oct2pus/vriskabot/util/logging"
 	"regexp"
 )
 

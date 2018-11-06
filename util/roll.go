@@ -1,8 +1,8 @@
 package roll
 
 import (
-	"./logging"
 	"errors"
+	"github.com/oct2pus/vriskabot/util/logging"
 	"math/rand"
 	"regexp"
 	"strconv"
