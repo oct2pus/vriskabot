@@ -11,16 +11,12 @@ import (
 	"github.com/oct2pus/vriskabot/util/logging"
 	"github.com/oct2pus/vriskabot/util/parse"
 	"github.com/oct2pus/vriskabot/util/roll"
-	"log"
-	"math/rand"
 	"os"
 	"os/signal"
 	"path/filepath"
 	"regexp"
 	"strconv"
-	"strings"
 	"syscall"
-	"time"
 )
 
 // Prefix Const
@@ -40,10 +36,6 @@ var (
 
 // initalize variables
 func init() {
-	executable, e := os.Executable()
-	if e != nil {
-		panic(e)
-	}
 	// command line argument
 	flag.StringVar(&Token, "t", "", "Bot Token")
 	flag.Parse()
@@ -70,12 +62,9 @@ func main() {
 	// Open a websocket connection to Discord and begin listening.
 	err = bot.Open()
 
-	if err != nil {
-		fmt.Println("error opening connection,", err)
-		Log.Println("error opening connection,", err)
+	if logging.CheckError(err) {
 		return
 	}
-
 	// Wait here until CTRL-C or other term signal is received.
 	fmt.Println("Bot is now running.  Press CTRL-C to exit.")
 	sc := make(chan os.Signal, 1)
@@ -99,7 +88,7 @@ func ready(discordSession *discordgo.Session, discordReady *discordgo.Ready) {
 func messageCreate(discordSession *discordgo.Session,
 	discordMessage *discordgo.MessageCreate) {
 
-	message := parseText(discordMessage.Message.Content)
+	message := etc.StringSlice(discordMessage.Message.Content)
 	// Ignore all messages created by the bot itself
 	if discordMessage.Author.Bot == true {
 		return
@@ -174,7 +163,7 @@ func sendF8Roll(modifier string) (*discordgo.MessageEmbed, error) {
 	if modifier != "" && parse.CheckFormated(modifier, "(\\+|-)?[0-9]*") {
 		mod, err := strconv.ParseInt(modifier, 10, 64)
 		logging.CheckError(err)
-		roll.Mod = mod
+		f8 = roll.new(4, 3, mod)
 	} else if modifier != "" {
 		return nil, errors.New("W8 what?")
 	}
@@ -196,7 +185,7 @@ func sendF8Roll(modifier string) (*discordgo.MessageEmbed, error) {
 
 	dieImage := "https://raw.githubusercontent.com/oct2pus/vriskabot/master/emoji/dfate.png"
 
-	return dieRollEmbed(f8Rolls, strconv.FormatInt(roll.modifier, 10), total, dieImage), nil
+	return dieRollEmbed(f8Rolls, strconv.FormatInt(f8.Mod, 10), total, dieImage), nil
 }
 
 func parseF8Mod(i string) bool {
@@ -362,7 +351,7 @@ func formatRollTable(table []string) string {
 }
 
 // determines what image to use
-func determineDieImage(die dieRoll) string {
+func determineDieImage(die roll) string {
 	switch {
 	case die.sizeOfDie <= 4:
 		return "https://raw.githubusercontent.com/oct2pus/vriskabot/master/emoji/d4.png"
