@@ -13,7 +13,6 @@ import (
 	"github.com/oct2pus/vriskabot/util/roll"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"regexp"
 	"strconv"
 	"syscall"
@@ -159,11 +158,11 @@ func messageCreate(discordSession *discordgo.Session,
 // for sending dice rolls related to the game fate
 func sendF8Roll(modifier string) (*discordgo.MessageEmbed, error) {
 
-	f8 := roll.new(4, 3, 0)
+	f8 := roll(4, 3, 0)
 	if modifier != "" && parse.CheckFormated(modifier, "(\\+|-)?[0-9]*") {
 		mod, err := strconv.ParseInt(modifier, 10, 64)
 		logging.CheckError(err)
-		f8 = roll.new(4, 3, mod)
+		f8 = roll(4, 3, mod)
 	} else if modifier != "" {
 		return nil, errors.New("W8 what?")
 	}
@@ -171,8 +170,8 @@ func sendF8Roll(modifier string) (*discordgo.MessageEmbed, error) {
 	table := roll.RollTable(f8)
 
 	// fate rolls are actually -1 to 1, not 1 to 3
-	for i, _ := range rolls {
-		rolls[i] -= 2
+	for i, _ := range table {
+		table[i] -= 2
 	}
 
 	var f8Rolls []string
@@ -181,7 +180,7 @@ func sendF8Roll(modifier string) (*discordgo.MessageEmbed, error) {
 		f8Rolls = append(f8Rolls, toF8DieSymbol(ele))
 	}
 
-	total := strconv.FormatInt(getTotal(rolls), 10)
+	total := strconv.FormatInt(getTotal(table), 10)
 
 	dieImage := "https://raw.githubusercontent.com/oct2pus/vriskabot/master/emoji/dfate.png"
 
@@ -250,7 +249,7 @@ func sendRoll(diceString string, commandInput string) (*discordgo.MessageEmbed,
 			return nil, errors.New("Why would anyone ever need to roll that many dice?")
 		}
 
-		rollTable := roll.RollTable(die)
+		rollTable := roll.RollTable(dice)
 		var stringTable []string
 		var result int64
 
@@ -274,7 +273,7 @@ func sendRoll(diceString string, commandInput string) (*discordgo.MessageEmbed,
 			stringTable[i] = strconv.FormatInt(ele, 10)
 		}
 
-		dieImage := determineDieImage(dice)
+		dieImage := determineDieImage(dice.Size)
 
 		embed := dieRollEmbed(stringTable,
 			strconv.FormatInt(dice.Mod, 10), strconv.FormatInt(result, 10),
@@ -351,19 +350,19 @@ func formatRollTable(table []string) string {
 }
 
 // determines what image to use
-func determineDieImage(die roll) string {
+func DieImage(face int64) string {
 	switch {
-	case die.sizeOfDie <= 4:
+	case face.sizeOfDie <= 4:
 		return "https://raw.githubusercontent.com/oct2pus/vriskabot/master/emoji/d4.png"
-	case die.sizeOfDie <= 6:
+	case face.sizeOfDie <= 6:
 		return "https://raw.githubusercontent.com/oct2pus/vriskabot/master/emoji/d6.png"
-	case die.sizeOfDie <= 8:
+	case face.sizeOfDie <= 8:
 		return "https://raw.githubusercontent.com/oct2pus/vriskabot/master/emoji/d8.png"
-	case die.sizeOfDie <= 10:
+	case face.sizeOfDie <= 10:
 		return "https://raw.githubusercontent.com/oct2pus/vriskabot/master/emoji/d10.png"
-	case die.sizeOfDie <= 12:
+	case face.sizeOfDie <= 12:
 		return "https://raw.githubusercontent.com/oct2pus/vriskabot/master/emoji/d12.png"
-	case die.sizeOfDie > 12:
+	case face.sizeOfDie > 12:
 		return "https://raw.githubusercontent.com/oct2pus/vriskabot/master/emoji/d20.png"
 	}
 	return ""
