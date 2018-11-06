@@ -159,7 +159,7 @@ func messageCreate(discordSession *discordgo.Session,
 func sendF8Roll(modifier string) (*discordgo.MessageEmbed, error) {
 
 	f8 := roll.New(4, 3, 0)
-	if modifier != "" && parse.CheckFormated(modifier, "(\\+|-)?[0-9]*") {
+	if modifier != "" && parse.CheckFormatted(modifier, "(\\+|-)?[0-9]*") {
 		mod, err := strconv.ParseInt(modifier, 10, 64)
 		logging.CheckError(err)
 		f8 = roll.New(4, 3, mod)
@@ -176,7 +176,7 @@ func sendF8Roll(modifier string) (*discordgo.MessageEmbed, error) {
 
 	var f8Rolls []string
 
-	for _, ele := range rolls {
+	for _, ele := range f8Rolls {
 		f8Rolls = append(f8Rolls, toF8DieSymbol(ele))
 	}
 
@@ -273,7 +273,7 @@ func sendRoll(diceString string, commandInput string) (*discordgo.MessageEmbed,
 			stringTable[i] = strconv.FormatInt(ele, 10)
 		}
 
-		dieImage := determineDieImage(dice.Size)
+		dieImage := DieImage(dice.Size)
 
 		embed := dieRollEmbed(stringTable,
 			strconv.FormatInt(dice.Mod, 10), strconv.FormatInt(result, 10),
