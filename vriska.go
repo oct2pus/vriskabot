@@ -116,20 +116,15 @@ func messageCreate(discordSession *discordgo.Session,
 				"place(8e)holder?")
 		case "fate", "f8":
 			var embed *discordgo.MessageEmbed
-			var err error
 
 			if len(message) > 2 {
-				embed, err = sendF8Roll(message[2])
+				embed = sendF8Roll(message[2])
 			} else {
-				embed, err = sendF8Roll("0")
+				embed = sendF8Roll("0")
 			}
-			if err != nil {
-				discordSession.ChannelMessageSend(discordMessage.ChannelID,
-					err.Error())
-			} else {
-				discordSession.ChannelMessageSend(discordMessage.ChannelID, "Rolling!!!!!!!!")
-				discordSession.ChannelMessageSendEmbed(discordMessage.ChannelID, embed)
-			}
+
+			discordSession.ChannelMessageSend(discordMessage.ChannelID, "Rolling!!!!!!!!")
+			discordSession.ChannelMessageSendEmbed(discordMessage.ChannelID, embed)
 		case "discord":
 			discordSession.ChannelMessageSend(discordMessage.ChannelID,
 				"https://discord.gg/PGVh2M8")
@@ -156,16 +151,18 @@ func messageCreate(discordSession *discordgo.Session,
 }
 
 // for sending dice rolls related to the game fate
-func sendF8Roll(modifier string) (*discordgo.MessageEmbed, error) {
+func sendF8Roll(modifier string) *discordgo.MessageEmbed {
 
-	f8 := roll.New(4, 3, 0)
-	if modifier != "" && parse.CheckFormatted(modifier, "(\\+|-)?[0-9]*") {
-		mod, err := strconv.ParseInt(modifier, 10, 64)
+	var mod int64
+	var err error
+	if modifier != "" && parse.CheckFormatted(modifier, "(\\+|-)?[0-9]+$") {
+		mod, err = strconv.ParseInt(modifier, 10, 64)
 		logging.CheckError(err)
-		f8 = roll.New(4, 3, mod)
-	} else if modifier != "" {
-		return nil, errors.New("W8 what?")
+	} else {
+		mod = 0
+		err = nil
 	}
+	f8 := roll.New(4, 3, mod)
 
 	table := roll.RollTable(f8)
 
@@ -180,11 +177,11 @@ func sendF8Roll(modifier string) (*discordgo.MessageEmbed, error) {
 		f8Rolls = append(f8Rolls, toF8DieSymbol(ele))
 	}
 
-	total := strconv.FormatInt(getTotal(table), 10)
+	total := strconv.FormatInt(getTotal(table)+f8.Mod, 10)
 
 	dieImage := "https://raw.githubusercontent.com/oct2pus/vriskabot/master/emoji/dfate.png"
 
-	return dieRollEmbed(f8Rolls, strconv.FormatInt(f8.Mod, 10), total, dieImage), nil
+	return dieRollEmbed(f8Rolls, strconv.FormatInt(f8.Mod, 10), total, dieImage)
 }
 
 func parseF8Mod(i string) bool {
@@ -269,8 +266,8 @@ func sendRoll(diceString string, commandInput string) (*discordgo.MessageEmbed,
 
 		//convert int slice to string slice
 
-		for i, ele := range rollTable {
-			stringTable[i] = strconv.FormatInt(ele, 10)
+		for _, ele := range rollTable {
+			stringTable = append(stringTable, strconv.FormatInt(ele, 10))
 		}
 
 		dieImage := DieImage(dice.Size)
