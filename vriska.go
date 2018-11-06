@@ -176,7 +176,7 @@ func sendF8Roll(modifier string) (*discordgo.MessageEmbed, error) {
 
 	var f8Rolls []string
 
-	for _, ele := range f8Rolls {
+	for _, ele := range table {
 		f8Rolls = append(f8Rolls, toF8DieSymbol(ele))
 	}
 
