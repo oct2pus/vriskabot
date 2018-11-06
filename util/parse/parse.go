@@ -5,9 +5,9 @@ import (
 	"regexp"
 )
 
-func CheckFormated(input string, regexp string) bool {
+func CheckFormated(input string, rgxp string) bool {
 	// todo: fix +- bullshit with regexp
-	compare, err := regexp.MatchString(regexp, diceString)
+	compare, err := regexp.MatchString(rgxp, input)
 	logging.CheckError(err)
 
 	if compare {

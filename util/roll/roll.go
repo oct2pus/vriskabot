@@ -1,12 +1,10 @@
 package roll
 
 import (
-	"errors"
 	"github.com/oct2pus/vriskabot/util/logging"
 	"math/rand"
 	"regexp"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -16,7 +14,7 @@ type roll struct {
 	Mod    int64 // Modifier to roll
 }
 
-func New(a int64, b int64, c int64) DieRoll {
+func New(a int64, b int64, c int64) roll {
 	return roll{a, b, c}
 }
 
@@ -59,7 +57,7 @@ func DiceSlice(input string) []string {
 }
 
 // turns the dieSlice string slice into a dieRoll object
-func FromStrings(diceSlice []string) dieRoll {
+func FromStrings(diceSlice []string) roll {
 	var die roll
 	var err error
 
@@ -71,7 +69,7 @@ func FromStrings(diceSlice []string) dieRoll {
 	logging.CheckError(err)
 
 	// if number is negative is negative
-	if dieSlice[2] == "-" {
+	if diceSlice[2] == "-" {
 		die.Mod = 0 - die.Mod
 	}
 
