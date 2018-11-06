@@ -158,11 +158,11 @@ func messageCreate(discordSession *discordgo.Session,
 // for sending dice rolls related to the game fate
 func sendF8Roll(modifier string) (*discordgo.MessageEmbed, error) {
 
-	f8 := roll(4, 3, 0)
+	f8 := roll.New(4, 3, 0)
 	if modifier != "" && parse.CheckFormated(modifier, "(\\+|-)?[0-9]*") {
 		mod, err := strconv.ParseInt(modifier, 10, 64)
 		logging.CheckError(err)
-		f8 = roll(4, 3, mod)
+		f8 = roll.New(4, 3, mod)
 	} else if modifier != "" {
 		return nil, errors.New("W8 what?")
 	}
@@ -341,7 +341,7 @@ func formatRollTable(table []string) string {
 			fieldValue += "\t"
 		}
 		fieldValue += "|" +
-			toCenter(table[x]) + "|"
+			etc.ToCenter(table[x]) + "|"
 	}
 
 	fieldValue += "`"
@@ -352,17 +352,17 @@ func formatRollTable(table []string) string {
 // determines what image to use
 func DieImage(face int64) string {
 	switch {
-	case face.sizeOfDie <= 4:
+	case face <= 4:
 		return "https://raw.githubusercontent.com/oct2pus/vriskabot/master/emoji/d4.png"
-	case face.sizeOfDie <= 6:
+	case face <= 6:
 		return "https://raw.githubusercontent.com/oct2pus/vriskabot/master/emoji/d6.png"
-	case face.sizeOfDie <= 8:
+	case face <= 8:
 		return "https://raw.githubusercontent.com/oct2pus/vriskabot/master/emoji/d8.png"
-	case face.sizeOfDie <= 10:
+	case face <= 10:
 		return "https://raw.githubusercontent.com/oct2pus/vriskabot/master/emoji/d10.png"
-	case face.sizeOfDie <= 12:
+	case face <= 12:
 		return "https://raw.githubusercontent.com/oct2pus/vriskabot/master/emoji/d12.png"
-	case face.sizeOfDie > 12:
+	case face > 12:
 		return "https://raw.githubusercontent.com/oct2pus/vriskabot/master/emoji/d20.png"
 	}
 	return ""
