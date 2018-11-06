@@ -26,6 +26,10 @@ func CheckError(err error) bool {
 
 func CreateLog() {
 	// error logging
+	executable, e := os.Executable()
+	if e != nil {
+		panic(e)
+	}
 	path := filepath.Dir(executable)
 	currentTime = time.Now().Format("2006-01-02@15h04m")
 	file, err := os.Create(path + ".logs@" + currentTime + ".log")
