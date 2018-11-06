@@ -1,7 +1,7 @@
 package roll
 
 import (
-	"./etc"
+	"./logging"
 	"errors"
 	"math/rand"
 	"regexp"
@@ -39,7 +39,7 @@ func RollTable(rolls roll) []int64 {
 // breaks the roll into a string slice
 // code assumes you've checked input prior
 // TODO: add a break/error state
-func diceslice(input string) []string {
+func DiceSlice(input string) []string {
 	// [0] is the number of dice being rolled
 	// [1] is the type of die
 	// [2] is the modifier direction (positive/negative)
@@ -59,22 +59,20 @@ func diceslice(input string) []string {
 }
 
 // turns the dieSlice string slice into a dieRoll object
-func FromString(rollString string) dieRoll {
+func FromStrings(diceSlice []string) dieRoll {
 	var die roll
 	var err error
 
-	dieSlice := diceslice(rollString)
-
-	die.Amount, err = strconv.ParseInt(dieSlice[0], 0, 0)
-	etc.CheckError(err)
-	die.Size, err = strconv.ParseInt(dieSlice[1], 0, 0)
-	etc.CheckError(err)
-	die.Mod, err = strconv.ParseInt(dieSlice[3], 0, 0)
-	etc.CheckError(err)
+	die.Amount, err = strconv.ParseInt(diceSlice[0], 0, 0)
+	logging.CheckError(err)
+	die.Size, err = strconv.ParseInt(diceSlice[1], 0, 0)
+	logging.CheckError(err)
+	die.Mod, err = strconv.ParseInt(diceSlice[3], 0, 0)
+	logging.CheckError(err)
 
 	// if number is negative is negative
 	if dieSlice[2] == "-" {
-		die.mod = 0 - die.mod
+		die.Mod = 0 - die.Mod
 	}
 
 	return die
