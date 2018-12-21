@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/oct2pus/botutil/etc"
-	"github.com/oct2pus/vriskabot/util/logging"
+	"github.com/oct2pus/botutil/logging"
 )
 
 type roll struct {
