@@ -80,7 +80,7 @@ func FromStringSlice(slice []string) roll {
 
 }
 
-// Takes  and returns a 'table' formatted for an embed
+// FormatTable takes and returns a 'table' formatted for an embed
 func FormatTable(table []string) string {
 	fieldValue := "`"
 	for x := 0; x < len(table); x++ {
@@ -99,7 +99,7 @@ func FormatTable(table []string) string {
 	return fieldValue
 }
 
-// Determines what image to use
+// DieImage returns an URL as a string based on an int64 value
 func DieImage(face int64) string {
 	switch {
 	case face <= 4:
@@ -117,7 +117,7 @@ func DieImage(face int64) string {
 	}
 }
 
-// getTotal gets the total value from an int64 slice
+// GetTotal gets the total value from an int64 slice
 func GetTotal(arr []int64) int64 {
 
 	sum := int64(0)
@@ -128,7 +128,7 @@ func GetTotal(arr []int64) int64 {
 	return sum
 }
 
-// getHighest gets the highest value from an int64 slice
+// GetHighest gets the highest value from an int64 slice
 func GetHighest(arr []int64) int64 {
 	highest := int64(0)
 	for x := 0; x < len(arr); x++ {
@@ -140,7 +140,7 @@ func GetHighest(arr []int64) int64 {
 	return highest
 }
 
-// getLowest gets the lowest value from an int64 slice
+// GetLowest gets the lowest value from an int64 slice
 func GetLowest(arr []int64) int64 {
 	lowest := arr[0]
 	for x := 1; x < len(arr); x++ {
