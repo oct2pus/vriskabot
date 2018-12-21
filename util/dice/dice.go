@@ -6,24 +6,31 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/bwmarrin/discordgo"
 	"github.com/oct2pus/botutil/etc"
 	"github.com/oct2pus/botutil/logging"
 )
 
-type roll struct {
-	Amount int64 // Amount of die being rolled
-	Size   int64 // Size of die being rolled
-	Mod    int64 // Modifier to roll
+// Roll contains 3 int64 values
+// Amount is how many dice are being rolled
+// Size is how large a dice being rolled is
+// Mod is the arthmatic modifier to the final tally
+type Roll struct {
+	Amount int64
+	Size   int64
+	Mod    int64
 }
 
-// New generates a new roll struct.
-func New(a int64, b int64, c int64) roll {
-	return roll{a, b, c}
+//TODO: further seperate packages, only things using a rollstruct should be here
+
+// New generates a new Roll struct.
+func New(a int64, b int64, c int64) Roll {
+	return Roll{a, b, c}
 }
 
-// Table returns a series of random numbers (determined by die.sizeOfDie) in an int64
-// slice the size of rolls.Amount.
-func Table(rolls roll) []int64 {
+// Table returns a series of random numbers (determined by die.sizeOfDie) in an
+//  int64 slice the size of rolls.Amount.
+func Table(rolls Roll) []int64 {
 	var table []int64
 	seed := time.Now()
 
@@ -37,7 +44,7 @@ func Table(rolls roll) []int64 {
 
 }
 
-// Slice breaks the roll into a string slice
+// Slice breaks the Roll into a string slice
 // code assumes you've checked input prior
 // TODO: add a break/error state.
 func Slice(input string) []string {
@@ -59,9 +66,9 @@ func Slice(input string) []string {
 	return slice
 }
 
-// FromStringSlice takes slice (a []string) and outputs a roll struct.
-func FromStringSlice(slice []string) roll {
-	var die roll
+// FromStringSlice takes slice (a []string) and outputs a Roll struct.
+func FromStringSlice(slice []string) Roll {
+	var die Roll
 	var err error
 
 	die.Amount, err = strconv.ParseInt(slice[0], 0, 0)
@@ -71,7 +78,6 @@ func FromStringSlice(slice []string) roll {
 	die.Mod, err = strconv.ParseInt(slice[3], 0, 0)
 	logging.CheckError(err)
 
-	// if number is negative is negative
 	if slice[2] == "-" {
 		die.Mod = 0 - die.Mod
 	}
@@ -150,4 +156,49 @@ func GetLowest(arr []int64) int64 {
 	}
 
 	return lowest
+}
+
+// IsFormated determines if the diceString input is formatted properly
+func IsFormated(diceString string) bool {
+	// todo: fix +- bullshit with regexp
+	compare, err := regexp.MatchString(
+		"[1-9]+[0-9]*d[1-9]+[0-9]*((\\+|-){1}[0-9]*)?", diceString)
+	logging.CheckError(err)
+
+	if compare {
+		return true
+	}
+	return false
+}
+
+// RollEmbed provides a nice, clean view into the results
+func RollEmbed(rollTable []string, mod string, result string,
+	dieImage string) *discordgo.MessageEmbed {
+
+	embed := &discordgo.MessageEmbed{
+		Color: 0x005682,
+		Type:  "Roooooooolling!",
+		Fields: []*discordgo.MessageEmbedField{
+			&discordgo.MessageEmbedField{
+				Name:   "Rolls",
+				Value:  FormatTable(rollTable),
+				Inline: true,
+			},
+			&discordgo.MessageEmbedField{
+				Name:   "Modifier",
+				Value:  mod,
+				Inline: true,
+			},
+			&discordgo.MessageEmbedField{
+				Name:   "Result",
+				Value:  result,
+				Inline: true,
+			},
+		},
+		Thumbnail: &discordgo.MessageEmbedThumbnail{
+			URL: dieImage,
+		},
+	}
+
+	return embed
 }
