@@ -100,7 +100,7 @@ func FormatTable(table []string) string {
 }
 
 // Determines what image to use
-func dieImage(face int64) string {
+func DieImage(face int64) string {
 	switch {
 	case face <= 4:
 		return "https://raw.githubusercontent.com/oct2pus/vriskabot/master/emoji/d4.png"
