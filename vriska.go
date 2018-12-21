@@ -1,21 +1,21 @@
-//Check Line 259 Dummy
-
 package main
 
 import (
 	"errors"
 	"flag"
 	"fmt"
-	"github.com/bwmarrin/discordgo"
-	"github.com/oct2pus/vriskabot/util/etc"
-	"github.com/oct2pus/vriskabot/util/logging"
-	"github.com/oct2pus/vriskabot/util/parse"
-	"github.com/oct2pus/vriskabot/util/roll"
 	"os"
 	"os/signal"
-	"regexp"
 	"strconv"
 	"syscall"
+
+	"github.com/bwmarrin/discordgo"
+	"github.com/oct2pus/botutil/embed"
+	"github.com/oct2pus/botutil/etc"
+	"github.com/oct2pus/botutil/logging"
+	"github.com/oct2pus/botutil/parse"
+	"github.com/oct2pus/vriskabot/util/dice"
+	"github.com/oct2pus/vriskabot/util/dice/f8"
 )
 
 // Prefix Const
@@ -82,147 +82,82 @@ func ready(discordSession *discordgo.Session, discordReady *discordgo.Ready) {
 	fmt.Println("Guilds: ", len(discordReady.Guilds))
 }
 
-// This function will be called (due to AddHandler above) every time a new
+// messageCreate will be called  every time a new
 // message is created on any channel that the autenticated bot has access to.
-func messageCreate(discordSession *discordgo.Session,
-	discordMessage *discordgo.MessageCreate) {
+func messageCreate(session *discordgo.Session,
+	message *discordgo.MessageCreate) {
 
-	message := etc.StringSlice(discordMessage.Message.Content)
+	messageSlice := etc.StringSlice(message.Message.Content)
 	// Ignore all messages created by the bot itself
-	if discordMessage.Author.Bot == true {
+	if message.Author.Bot == true {
 		return
 	}
+
 	// commands
-	if message[0] == prefix && len(message) > 1 {
-		switch message[1] {
+	// TODO: clean this up; its so damn ugly
+	// TODO: split how errors are reported internally and externally
+	if messageSlice[0] == prefix && len(messageSlice) > 1 {
+		switch messageSlice[1] {
 		case "roll", "lroll", "hroll":
-			if len(message) > 2 {
-				embed, err := sendRoll(message[2], message[1])
+			if len(messageSlice) > 2 {
+				embed, err := sendRoll(messageSlice[2], messageSlice[1])
 				if !logging.CheckError(err) {
-					discordSession.ChannelMessageSend(discordMessage.ChannelID, "Rolling!!!!!!!!")
-					discordSession.ChannelMessageSendEmbed(discordMessage.ChannelID, embed)
+					session.ChannelMessageSend(message.ChannelID, "Rolling"+
+						"!!!!!!!!")
+					session.ChannelMessageSendEmbed(message.ChannelID, embed)
 				} else {
-					discordSession.ChannelMessageSend(discordMessage.ChannelID,
+					session.ChannelMessageSend(message.ChannelID,
 						err.Error())
 				}
 			} else {
-				discordSession.ChannelMessageSend(discordMessage.ChannelID, "Roll what?")
+				session.ChannelMessageSend(message.ChannelID, "Roll what?")
 			}
 		case "fortune", "8ball":
-			discordSession.ChannelMessageSend(discordMessage.ChannelID,
+			session.ChannelMessageSend(message.ChannelID,
 				"w8 a moment ::::)")
 		case "stats":
-			discordSession.ChannelMessageSend(discordMessage.ChannelID,
+			session.ChannelMessageSend(message.ChannelID,
 				"place(8e)holder?")
 		case "fate", "f8":
 			var embed *discordgo.MessageEmbed
 
-			if len(message) > 2 {
-				embed = sendF8Roll(message[2])
+			if len(messageSlice) > 2 {
+				embed = sendF8Roll(messageSlice[2])
 			} else {
 				embed = sendF8Roll("0")
 			}
 
-			discordSession.ChannelMessageSend(discordMessage.ChannelID, "Rolling!!!!!!!!")
-			discordSession.ChannelMessageSendEmbed(discordMessage.ChannelID, embed)
+			session.ChannelMessageSend(message.ChannelID, "Rolling!!!!!!!!")
+			session.ChannelMessageSendEmbed(message.ChannelID, embed)
 		case "discord":
-			discordSession.ChannelMessageSend(discordMessage.ChannelID,
+			session.ChannelMessageSend(message.ChannelID,
 				"https://discord.gg/PGVh2M8")
 		case "invite":
-			discordSession.ChannelMessageSend(discordMessage.ChannelID,
-				"<https://discordapp.com/oauth2/authorize?client_id=497943811700424704&scope=bot&permissions=281600>")
+			session.ChannelMessageSend(message.ChannelID,
+				"<https://discordapp.com/oauth2/authorize?client_id=497943811"+
+					"700424704&scope=bot&permissions=281600>")
 		case "help", "commands":
-			discordSession.ChannelMessageSend(discordMessage.ChannelID,
-				"My help is currently incomplete, 8ut my commands are:\n`roll`\n`lroll`\n`hroll`\n`discord`\n`invite`\n`help`\n`about`")
+			session.ChannelMessageSend(message.ChannelID,
+				"My commands are:\n`roll`\n`lroll`\n`hroll`\n`f8`\n`discord`"+
+					"\n`invite`\n`help`\n`about`")
 		case "about", "credits":
-			discordSession.ChannelMessageSendEmbed(discordMessage.ChannelID, getCredits())
+			session.ChannelMessageSendEmbed(message.ChannelID,
+				embed.CreditsEmbed("Vriska8ot", " mjölk#8323 "+
+					"( http://cosmic-rumpus.tumblr.com/ )",
+					"", "Emojis by Dzuk#1671 ( https://noct.zone/ )"))
 		default:
-			discordSession.ChannelMessageSend(discordMessage.ChannelID,
+			session.ChannelMessageSend(message.ChannelID,
 				"::::?")
 		}
 	}
 
-	for _, ele := range discordMessage.Mentions {
+	for _, ele := range message.Mentions {
 		if ele.Username == self.Username {
-			discordSession.ChannelMessageSend(discordMessage.ChannelID,
-				"Hiiiiiiii?\n8y the way my prefix is '`vriska: `'. Not that you neeeeeeeeded to know or anything.")
+			session.ChannelMessageSend(message.ChannelID,
+				"Hiiiiiiii?\n8y the way my prefix is '`vriska: `'. "+
+					"Not that you neeeeeeeeded to know or anything.")
 		}
 	}
-}
-
-// for sending dice rolls related to the game fate
-func sendF8Roll(modifier string) *discordgo.MessageEmbed {
-
-	var mod int64
-	var err error
-	if modifier != "" && parse.CheckFormatted(modifier, "(\\+|-)?[0-9]+$") {
-		mod, err = strconv.ParseInt(modifier, 10, 64)
-		logging.CheckError(err)
-	} else {
-		mod = 0
-		err = nil
-	}
-	f8 := roll.New(4, 3, mod)
-
-	table := roll.RollTable(f8)
-
-	// fate rolls are actually -1 to 1, not 1 to 3
-	for i, _ := range table {
-		table[i] -= 2
-	}
-
-	var f8Rolls []string
-
-	for _, ele := range table {
-		f8Rolls = append(f8Rolls, toF8DieSymbol(ele))
-	}
-
-	total := strconv.FormatInt(getTotal(table)+f8.Mod, 10)
-
-	dieImage := "https://raw.githubusercontent.com/oct2pus/vriskabot/master/emoji/dfate.png"
-
-	return dieRollEmbed(f8Rolls, strconv.FormatInt(f8.Mod, 10), total, dieImage)
-}
-
-func parseF8Mod(i string) bool {
-	compare, err := regexp.MatchString(
-		"(\\+|-)?[0-9]*", i)
-	logging.CheckError(err)
-
-	if compare {
-		return true
-	}
-	return false
-
-}
-
-func getCredits() *discordgo.MessageEmbed {
-	embed := &discordgo.MessageEmbed{
-		Color: 0x005682,
-		Type:  "A8out",
-		Fields: []*discordgo.MessageEmbedField{
-			&discordgo.MessageEmbedField{
-				Name:   "Vriska8ot",
-				Value:  "Created by \\🐙\\🐙#0413 ( http://oct2pus.tumblr.com/ )\nVriska8ot uses the 'discordgo' library\n( https://github.com/bwmarrin/discordgo/ )",
-				Inline: false,
-			},
-			&discordgo.MessageEmbedField{
-				Name:   "Special Thanks",
-				Value:  "Avatar By mjölk#8323 ( http://cosmic-rumpus.tumblr.com/ )\nEmojis by Dzuk#1671 ( https://noct.zone/ )",
-				Inline: false,
-			},
-			&discordgo.MessageEmbedField{
-				Name:   "Disclaimer",
-				Value:  "Vriska8ot uses **Mutant Standard Emoji** (https://mutant.tech)\n**Mutant Standard Emoji** are licensed under CC-BY-NC-SA 4.0 (https://creativecommons.org/licenses/by-nc-sa/4.0/)",
-				Inline: false,
-			},
-		},
-		Thumbnail: &discordgo.MessageEmbedThumbnail{
-			URL: "https://raw.githubusercontent.com/oct2pus/vriskabot/master/art/avatar.png",
-		},
-	}
-
-	return embed
 }
 
 // performs the 'math' for a roll, lroll, or hroll function, returns a
@@ -239,30 +174,31 @@ func sendRoll(diceString string, commandInput string) (*discordgo.MessageEmbed,
 	// This is called valid because the internet has made a fool of me.
 	if valid {
 
-		dieSlices := roll.DiceSlice(diceString)
-		dice := roll.FromStrings(dieSlices)
+		dieSlices := dice.Slice(diceString)
+		die := dice.FromStringSlice(dieSlices)
 
-		if dice.Amount > 20 {
-			return nil, errors.New("Why would anyone ever need to roll that many dice?")
+		if die.Amount > 20 {
+			return nil, errors.New("Why would anyone ever need to roll that " +
+				"many dice?")
 		}
 
-		rollTable := roll.RollTable(dice)
+		rollTable := dice.Table(die)
 		var stringTable []string
 		var result int64
 
 		// get result
 		switch commandInput {
 		case "roll":
-			result = getTotal(rollTable)
+			result = dice.GetTotal(rollTable)
 		case "lroll":
-			result = getLowest(rollTable)
+			result = dice.GetLowest(rollTable)
 		case "hroll":
-			result = getHighest(rollTable)
+			result = dice.GetHighest(rollTable)
 		case "default":
-			return nil, errors.New("Holy sh8t don't 8reak me!!!!!!!!")
+			return nil, errors.New("Holy sh8t dont break me!")
 		}
 
-		result += dice.Mod
+		result += die.Mod
 
 		//convert int slice to string slice
 
@@ -270,145 +206,51 @@ func sendRoll(diceString string, commandInput string) (*discordgo.MessageEmbed,
 			stringTable = append(stringTable, strconv.FormatInt(ele, 10))
 		}
 
-		dieImage := DieImage(dice.Size)
+		dieImage := dice.DieImage(die.Size)
 
-		embed := dieRollEmbed(stringTable,
-			strconv.FormatInt(dice.Mod, 10), strconv.FormatInt(result, 10),
+		embed := dice.RollEmbed(stringTable,
+			strconv.FormatInt(die.Mod, 10), strconv.FormatInt(result, 10),
 			dieImage)
 
 		return embed, nil
 	}
 
-	return nil, errors.New("You gotta format it like this!\n`vriska: roll XdX(+/-X)`")
+	return nil, errors.New("You gotta format it like this!\n`vriska: " +
+		"roll XdX(+/-X)`")
 }
 
-// I stopped at rewriting embeds so they can be multi use
-func dieRollEmbed(rollTable []string, mod string, result string,
-	dieImage string) *discordgo.MessageEmbed {
+// sendF8Roll sends dice rolls related to the game "Fate"
+func sendF8Roll(modifier string) *discordgo.MessageEmbed {
 
-	embed := &discordgo.MessageEmbed{
-		Color: 0x005682,
-		Type:  "Roooooooolling!",
-		Fields: []*discordgo.MessageEmbedField{
-			&discordgo.MessageEmbedField{
-				Name:   "Rolls",
-				Value:  formatRollTable(rollTable),
-				Inline: true,
-			},
-			&discordgo.MessageEmbedField{
-				Name:   "Modifier",
-				Value:  mod,
-				Inline: true,
-			},
-			&discordgo.MessageEmbedField{
-				Name:   "Result",
-				Value:  result,
-				Inline: true,
-			},
-		},
-		Thumbnail: &discordgo.MessageEmbedThumbnail{
-			URL: dieImage,
-		},
+	var mod int64
+	var err error
+	if modifier != "" && parse.CheckFormatted(modifier, "(\\+|-)?[0-9]+$") {
+		mod, err = strconv.ParseInt(modifier, 10, 64)
+		logging.CheckError(err)
+	} else {
+		mod = 0
+		err = nil
+	}
+	die := dice.New(4, 3, mod)
+
+	table := dice.Table(die)
+
+	// fate rolls are actually -1 to 1, not 1 to 3
+	for i := range table {
+		table[i] -= 2
 	}
 
-	return embed
-}
+	var rolls []string
 
-func toF8DieSymbol(i int64) string {
-	switch i {
-	case int64(-1):
-		return "-"
-	case int64(0):
-		return "0"
-	case int64(1):
-		return "+"
-	default:
-		return "Oh gog."
-	}
-}
-
-// Takes roll table and returns a
-func formatRollTable(table []string) string {
-	fieldValue := "`"
-	for x := 0; x < len(table); x++ {
-		if x%4 == 0 && x != 0 {
-			fieldValue += "`\n`"
-		}
-		if x != 0 && x%4 != 0 {
-			fieldValue += "\t"
-		}
-		fieldValue += "|" +
-			etc.ToCenter(table[x]) + "|"
+	for _, ele := range table {
+		rolls = append(rolls, f8.DieSymbol(ele))
 	}
 
-	fieldValue += "`"
+	total := strconv.FormatInt(dice.GetTotal(table)+die.Mod, 10)
 
-	return fieldValue
-}
+	dieImage := "https://raw.githubusercontent.com/oct2pus/vriskabot/master/e" +
+		"moji/dfate.png"
 
-// determines what image to use
-func DieImage(face int64) string {
-	switch {
-	case face <= 4:
-		return "https://raw.githubusercontent.com/oct2pus/vriskabot/master/emoji/d4.png"
-	case face <= 6:
-		return "https://raw.githubusercontent.com/oct2pus/vriskabot/master/emoji/d6.png"
-	case face <= 8:
-		return "https://raw.githubusercontent.com/oct2pus/vriskabot/master/emoji/d8.png"
-	case face <= 10:
-		return "https://raw.githubusercontent.com/oct2pus/vriskabot/master/emoji/d10.png"
-	case face <= 12:
-		return "https://raw.githubusercontent.com/oct2pus/vriskabot/master/emoji/d12.png"
-	case face > 12:
-		return "https://raw.githubusercontent.com/oct2pus/vriskabot/master/emoji/d20.png"
-	}
-	return ""
-}
-
-// gets the total value from an int64 slice
-func getTotal(arr []int64) int64 {
-
-	sum := int64(0)
-	for x := 0; x < len(arr); x++ {
-		sum += arr[x]
-	}
-
-	return sum
-}
-
-// gets the highest value from an int64 slice
-func getHighest(arr []int64) int64 {
-	highest := int64(0)
-	for x := 0; x < len(arr); x++ {
-		if highest < arr[x] {
-			highest = arr[x]
-		}
-	}
-
-	return highest
-}
-
-// gets the lowest value from an int64 slice
-func getLowest(arr []int64) int64 {
-	lowest := arr[0]
-	for x := 1; x < len(arr); x++ {
-		if lowest > arr[x] {
-			lowest = arr[x]
-		}
-	}
-
-	return lowest
-}
-
-// determines if the diceString input is formatted properly
-func isDiceMessageFormated(diceString string) bool {
-	// todo: fix +- bullshit with regexp
-	compare, err := regexp.MatchString(
-		"[1-9]+[0-9]*d[1-9]+[0-9]*((\\+|-){1}[0-9]*)?", diceString)
-	logging.CheckError(err)
-
-	if compare {
-		return true
-	}
-	return false
+	return dice.RollEmbed(rolls, strconv.FormatInt(die.Mod, 10), total,
+		dieImage)
 }
