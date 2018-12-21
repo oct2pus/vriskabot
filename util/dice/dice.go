@@ -118,7 +118,7 @@ func dieImage(face int64) string {
 }
 
 // getTotal gets the total value from an int64 slice
-func getTotal(arr []int64) int64 {
+func GetTotal(arr []int64) int64 {
 
 	sum := int64(0)
 	for x := 0; x < len(arr); x++ {
@@ -129,7 +129,7 @@ func getTotal(arr []int64) int64 {
 }
 
 // getHighest gets the highest value from an int64 slice
-func getHighest(arr []int64) int64 {
+func GetHighest(arr []int64) int64 {
 	highest := int64(0)
 	for x := 0; x < len(arr); x++ {
 		if highest < arr[x] {
@@ -141,7 +141,7 @@ func getHighest(arr []int64) int64 {
 }
 
 // getLowest gets the lowest value from an int64 slice
-func getLowest(arr []int64) int64 {
+func GetLowest(arr []int64) int64 {
 	lowest := arr[0]
 	for x := 1; x < len(arr); x++ {
 		if lowest > arr[x] {
