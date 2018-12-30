@@ -27,10 +27,9 @@ const (
 
 // 'global' variables
 var (
-	// command line argument
 	Token string
-
-	self *discordgo.User
+	self  *discordgo.User
+	color int
 )
 
 // initalize variables
@@ -41,6 +40,8 @@ func init() {
 
 	// error logging
 	logging.CreateLog()
+
+	color = 0x005682
 }
 
 // buddy its main
@@ -144,7 +145,8 @@ func messageCreate(session *discordgo.Session,
 			session.ChannelMessageSendEmbed(message.ChannelID,
 				embed.CreditsEmbed("Vriska8ot", " mjölk#8323 "+
 					"( http://cosmic-rumpus.tumblr.com/ )",
-					"", "Emojis by Dzuk#1671 ( https://noct.zone/ )"))
+					"", "Emojis by Dzuk#1671 ( https://noct.zone/ )",
+					0x005682))
 		default:
 			session.ChannelMessageSend(message.ChannelID,
 				"::::?")
