@@ -1,12 +1,12 @@
 package main
 
 import (
-	"vriskabot/command"
 	"flag"
 	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
+	"vriskabot/command"
 
 	"github.com/oct2pus/bot/bot"
 )
@@ -18,7 +18,10 @@ func main() {
 	flag.StringVar(&token, "t", "", "Bot Token")
 	flag.Parse()
 
-	if err := vriska.New("Vriska8ot", "vriska:", token, 0x005682); err != nil {
+	err := vriska.New("Vriska8ot", "vriska:", token,
+		"Hiiiiiiii?\n8y the way my prefix is \"`vriska: `\". "+
+			"Not that you neeeeeeeeded to know or anything.", "::::?", 0x005682)
+	if err != nil {
 		fmt.Printf("%v can't login\nerror: %v\n", vriska.Name, err)
 		return
 	}
@@ -30,7 +33,7 @@ func main() {
 	vriska.Session.AddHandler(vriska.MessageCreate)
 
 	// Open Bot
-	err := vriska.Session.Open()
+	err = vriska.Session.Open()
 	if err != nil {
 		fmt.Printf("Error openning connection: %v\nDump bot info %v\n",
 			err,
