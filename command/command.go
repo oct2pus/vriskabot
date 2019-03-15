@@ -19,17 +19,15 @@ import (
 
 // F8 represents a F8 dice roll
 func F8(bot bot.Bot, message *discordgo.MessageCreate, input []string) {
-	modifier := input[0]
 	var mod int64
 	var err error
-	if modifier != "" && parse.CheckFormatted(modifier, "(\\+|-)?[0-9]+$") {
-		mod, err = strconv.ParseInt(modifier, 10, 64)
+	if len(input) != 0 && parse.CheckFormatted(input[0], "(\\+|-)?[0-9]+$") {
+		mod, err = strconv.ParseInt(input[0], 10, 64)
 		if err != nil {
 			return
 		}
 	} else {
 		mod = 0
-		err = nil
 	}
 	die := dice.New(4, 3, mod)
 
@@ -113,61 +111,59 @@ func HRoll(bot bot.Bot, message *discordgo.MessageCreate, input []string) {
 func roll(bot bot.Bot,
 	message *discordgo.MessageCreate,
 	diceString, com string) {
-	valid := true
+
 	if !checkFormatted(diceString,
 		"[1-9]+[0-9]*d[1-9]+[0-9]*((\\+|-){1}[0-9]*)?") {
-		valid = false
-	}
-
-	// This is called valid because the internet has made a fool of me.
-	if valid {
-		embed.SendMessage(bot.Session, message.ChannelID,
-			"Rolling!!!!!!!!")
-		dieSlices := dice.Slice(diceString)
-		die := dice.FromStringSlice(dieSlices)
-
-		if die.Amount > 20 {
-			go embed.SendMessage(bot.Session, message.ChannelID,
-				"Why would anyone ever need to roll that "+
-					"many dice?")
-			return
-		}
-
-		rollTable := dice.Table(die)
-		var stringTable []string
-		var result int64
-
-		switch com {
-		case "roll":
-			result = dice.GetTotal(rollTable)
-		case "lroll":
-			result = dice.GetLowest(rollTable)
-		case "hroll":
-			result = dice.GetHighest(rollTable)
-		case "default": // something REALLY bad happened if this is reached
-			go embed.SendMessage(bot.Session, message.ChannelID,
-				"Holy sh8t dont break me!!!!!!!!")
-		}
-		result += die.Mod
-
-		//convert int slice to string slice
-
-		for _, ele := range rollTable {
-			stringTable = append(stringTable, strconv.FormatInt(ele, 10))
-		}
-
-		dieImage := dice.DieImage(die.Size)
-
-		emb := dice.RollEmbed(stringTable,
-			strconv.FormatInt(die.Mod, 10), strconv.FormatInt(result, 10),
-			dieImage)
-
-		go embed.SendEmbededMessage(bot.Session, message.ChannelID, emb)
-	} else {
 		go embed.SendMessage(bot.Session, message.ChannelID,
 			"You gotta format it like this!\n`vriska: "+
 				"roll XdX(+/-X)`")
+		return
 	}
+
+	dieSlices := dice.Slice(diceString)
+	die := dice.FromStringSlice(dieSlices)
+
+	if die.Amount > 20 {
+		go embed.SendMessage(bot.Session, message.ChannelID,
+			"Why would anyone ever need to roll that "+
+				"many dice?")
+		return
+	}
+
+	embed.SendMessage(bot.Session, message.ChannelID,
+		"Rolling!!!!!!!!")
+
+	rollTable := dice.Table(die)
+	var stringTable []string
+	var result int64
+
+	switch com {
+	case "roll":
+		result = dice.GetTotal(rollTable)
+	case "lroll":
+		result = dice.GetLowest(rollTable)
+	case "hroll":
+		result = dice.GetHighest(rollTable)
+	case "default": // something REALLY bad happened if this is reached
+		go embed.SendMessage(bot.Session, message.ChannelID,
+			"Holy sh8t dont break me!!!!!!!!")
+		return
+	}
+	result += die.Mod
+
+	//convert int slice to string slice
+
+	for _, ele := range rollTable {
+		stringTable = append(stringTable, strconv.FormatInt(ele, 10))
+	}
+
+	dieImage := dice.DieImage(die.Size)
+
+	emb := dice.RollEmbed(stringTable,
+		strconv.FormatInt(die.Mod, 10), strconv.FormatInt(result, 10),
+		dieImage)
+
+	go embed.SendEmbededMessage(bot.Session, message.ChannelID, emb)
 }
 
 func checkFormatted(input string, rgxp string) bool {
