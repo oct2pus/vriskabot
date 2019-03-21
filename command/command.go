@@ -17,7 +17,7 @@ import (
 	"github.com/oct2pus/botutil/parse"
 )
 
-// F8 represents a F8 dice roll
+// F8 represents a F8 dice rice.
 func F8(bot bot.Bot, message *discordgo.MessageCreate, input []string) {
 	var mod int64
 	var err error
@@ -91,23 +91,40 @@ func Help(bot bot.Bot,
 			"\n`invite`\n`help`\n`about`")
 }
 
-// Roll returns a normal type of roll
+// Roll returns a normal type of roll.
 func Roll(bot bot.Bot, message *discordgo.MessageCreate, input []string) {
+	if noInput(input) {
+		input = append(input, "")
+	}
 	go roll(bot, message, input[0], "roll")
 }
 
-// LRoll returns the lowest die in a roll
+// LRoll returns the lowest die in a roll.
 func LRoll(bot bot.Bot, message *discordgo.MessageCreate, input []string) {
+	if noInput(input) {
+		input = append(input, "")
+	}
 	go roll(bot, message, input[0], "lroll")
 }
 
-// HRoll returns the highest die in a roll
+// HRoll returns the highest die in a roll.
 func HRoll(bot bot.Bot, message *discordgo.MessageCreate, input []string) {
+	if noInput(input) {
+		input = append(input, "")
+	}
 	go roll(bot, message, input[0], "hroll")
 }
 
-// roll performs the 'math' for a roll, lroll, or hroll function, returns a
-// MessageEmbed
+// noInput catches a gotcha, i[] can be len = 0, return true if 0 or smaller.
+func noInput(i []string) bool {
+	if len(i) <= 0 {
+		return true
+	}
+	return false
+}
+
+// roll performs the 'math' for a roll, lroll, or hroll function, should not
+// be accessed directly.
 func roll(bot bot.Bot,
 	message *discordgo.MessageCreate,
 	diceString, com string) {
@@ -166,6 +183,8 @@ func roll(bot bot.Bot,
 	go embed.SendEmbededMessage(bot.Session, message.ChannelID, emb)
 }
 
+// checkFormatted is used for regexp checks. returns true if input is correctly
+// formatted.
 func checkFormatted(input string, rgxp string) bool {
 	// todo: fix +- bullshit with regexp
 	compare, err := regexp.MatchString(rgxp, input)
