@@ -25,7 +25,7 @@ func main() {
 		fmt.Printf("%v can't login\nerror: %v\n", vriska.Name, err)
 		return
 	}
-	// add commandds and responses
+	// add commands and responses
 	vriska = addCommands(vriska)
 	vriska = addPhrases(vriska)
 	// Event Handlers
@@ -35,7 +35,7 @@ func main() {
 	// Open Bot
 	err = vriska.Session.Open()
 	if err != nil {
-		fmt.Printf("Error openning connection: %v\nDump bot info %v\n",
+		fmt.Printf("Error opening connection: %v\nDump bot info %v\n",
 			err,
 			vriska.String())
 	}
