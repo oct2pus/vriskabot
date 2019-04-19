@@ -13,15 +13,13 @@ import (
 	"vriskabot/dice"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/oct2pus/botutil/logging"
-	"github.com/oct2pus/botutil/parse"
 )
 
 // F8 represents a F8 dice rice.
 func F8(bot bot.Bot, message *discordgo.MessageCreate, input []string) {
 	var mod int64
 	var err error
-	if len(input) != 0 && parse.CheckFormatted(input[0], "(\\+|-)?[0-9]+$") {
+	if len(input) != 0 && checkFormatted(input[0], "(\\+|-)?[0-9]+$") {
 		mod, err = strconv.ParseInt(input[0], 10, 64)
 		if err != nil {
 			return
@@ -138,7 +136,12 @@ func roll(bot bot.Bot,
 	}
 
 	dieSlices := dice.Slice(diceString)
-	die := dice.FromStringSlice(dieSlices)
+	die, err := dice.FromStringSlice(dieSlices)
+	if err != nil {
+		go embed.SendMessage(bot.Session, message.ChannelID, "That num8er is"+
+			" waaaaaaaay to 8ig for me the handle.")
+		return
+	}
 
 	if die.Amount > 20 {
 		go embed.SendMessage(bot.Session, message.ChannelID,
@@ -183,12 +186,12 @@ func roll(bot bot.Bot,
 	go embed.SendEmbededMessage(bot.Session, message.ChannelID, emb)
 }
 
-// checkFormatted is used for regexp checks. returns true if input is correctly
-// formatted.
 func checkFormatted(input string, rgxp string) bool {
 	// todo: fix +- bullshit with regexp
 	compare, err := regexp.MatchString(rgxp, input)
-	logging.CheckError(err)
+	if err != nil {
+		return false
+	}
 
 	if compare {
 		return true
