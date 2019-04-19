@@ -2,21 +2,22 @@ package f8
 
 import (
 	"regexp"
-
-	"github.com/oct2pus/botutil/logging"
 )
 
 // ParseMod Parses modifier for fate die rolls
 func ParseMod(i string) bool {
 	compare, err := regexp.MatchString(
 		"(\\+|-)?[0-9]*", i)
-	logging.CheckError(err)
+
+	if err != nil {
+		return false
+	}
 
 	if compare {
 		return true
 	}
-	return false
 
+	return false
 }
 
 // DieSymbol Dumb switch to convert -1 to 1 to a fate die symbol

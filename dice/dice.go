@@ -7,8 +7,6 @@ import (
 	"time"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/oct2pus/botutil/etc"
-	"github.com/oct2pus/botutil/logging"
 )
 
 // Roll contains 3 int64 values
@@ -67,23 +65,28 @@ func Slice(input string) []string {
 }
 
 // FromStringSlice takes slice (a []string) and outputs a Roll struct.
-func FromStringSlice(slice []string) Roll {
+func FromStringSlice(slice []string) (Roll, error) {
 	var die Roll
 	var err error
 
 	die.Amount, err = strconv.ParseInt(slice[0], 0, 0)
-	logging.CheckError(err)
+	if err != nil {
+		return Roll{}, err
+	}
 	die.Size, err = strconv.ParseInt(slice[1], 0, 0)
-	logging.CheckError(err)
+	if err != nil {
+		return Roll{}, err
+	}
 	die.Mod, err = strconv.ParseInt(slice[3], 0, 0)
-	logging.CheckError(err)
+	if err != nil {
+		return Roll{}, err
+	}
 
 	if slice[2] == "-" {
 		die.Mod = 0 - die.Mod
 	}
 
-	return die
-
+	return die, nil
 }
 
 // FormatTable takes and returns a 'table' formatted for an embed
@@ -97,7 +100,7 @@ func FormatTable(table []string) string {
 			fieldValue += "\t"
 		}
 		fieldValue += "|" +
-			etc.ToCenter(table[x]) + "|"
+			toCenter(table[x]) + "|"
 	}
 
 	fieldValue += "`"
@@ -163,7 +166,9 @@ func IsFormated(diceString string) bool {
 	// todo: fix +- bullshit with regexp
 	compare, err := regexp.MatchString(
 		"[1-9]+[0-9]*d[1-9]+[0-9]*((\\+|-){1}[0-9]*)?", diceString)
-	logging.CheckError(err)
+	if err != nil {
+		return false
+	}
 
 	if compare {
 		return true
@@ -201,4 +206,16 @@ func RollEmbed(rollTable []string, mod string, result string,
 	}
 
 	return embed
+}
+
+// toCenter centers text
+func toCenter(s string) string {
+	switch len(s) {
+	case 1:
+		return " " + s + " "
+	case 2:
+		return " " + s
+	default:
+		return s
+	}
 }
