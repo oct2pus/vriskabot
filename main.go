@@ -18,7 +18,7 @@ func main() {
 	flag.StringVar(&token, "t", "", "Bot Token")
 	flag.Parse()
 
-	err := vriska.New("Vriska8ot", "vriska:", token,
+	err := vriska.New("Vriska8ot", "8", token,
 		"Hiiiiiiii?\n8y the way my prefix is \"`vriska: `\". "+
 			"Not that you neeeeeeeeded to know or anything.", "::::?", 0x005682)
 	if err != nil {
