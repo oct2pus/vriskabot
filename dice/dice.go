@@ -112,17 +112,17 @@ func FormatTable(table []string) string {
 func DieImage(face int64) string {
 	switch {
 	case face <= 4:
-		return "https://raw.githubusercontent.com/oct2pus/vriskabot/master/emoji/d4.png"
+		return "https://raw.githubusercontent.com/oct2pus/vriskabot/master/art/d4.png"
 	case face <= 6:
-		return "https://raw.githubusercontent.com/oct2pus/vriskabot/master/emoji/d6.png"
+		return "https://raw.githubusercontent.com/oct2pus/vriskabot/master/art/d6.png"
 	case face <= 8:
-		return "https://raw.githubusercontent.com/oct2pus/vriskabot/master/emoji/d8.png"
+		return "https://raw.githubusercontent.com/oct2pus/vriskabot/master/art/d8.png"
 	case face <= 10:
-		return "https://raw.githubusercontent.com/oct2pus/vriskabot/master/emoji/d10.png"
+		return "https://raw.githubusercontent.com/oct2pus/vriskabot/master/art/d10.png"
 	case face <= 12:
-		return "https://raw.githubusercontent.com/oct2pus/vriskabot/master/emoji/d12.png"
+		return "https://raw.githubusercontent.com/oct2pus/vriskabot/master/art/d12.png"
 	default:
-		return "https://raw.githubusercontent.com/oct2pus/vriskabot/master/emoji/d20.png"
+		return "https://raw.githubusercontent.com/oct2pus/vriskabot/master/art/d20.png"
 	}
 }
 
