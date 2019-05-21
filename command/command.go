@@ -15,6 +15,26 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
+// Credits provides attributation.
+func Credits(bot bot.Bot,
+	message *discordgo.MessageCreate,
+	input []string) {
+	go embed.SendEmbededMessage(bot.Session, message.ChannelID,
+		embed.CreditsEmbed(bot.Name,
+			"(milk wizard#8323 http://cosmic-rumpus.tumblr.com/ )",
+			"",
+			"Dzuk#1671 ( https://noct.zone/ )",
+			"https://raw.githubusercontent.com/oct2pus/vriskabot/master/art/"+
+				"vriskabot.png",
+			bot.Color))
+}
+
+// Discord posts my discord URL.
+func Discord(bot bot.Bot, message *discordgo.MessageCreate, input []string) {
+	go embed.SendMessage(bot.Session, message.ChannelID,
+		"https://discord.gg/PGVh2M8")
+}
+
 // F8 represents a F8 dice rice.
 func F8(bot bot.Bot, message *discordgo.MessageCreate, input []string) {
 	var mod int64
@@ -52,33 +72,6 @@ func F8(bot bot.Bot, message *discordgo.MessageCreate, input []string) {
 			dieImage))
 }
 
-// Discord posts my discord URL.
-func Discord(bot bot.Bot, message *discordgo.MessageCreate, input []string) {
-	go embed.SendMessage(bot.Session, message.ChannelID,
-		"https://discord.gg/PGVh2M8")
-}
-
-// Invite posts a link to invite Vriska8ot.
-func Invite(bot bot.Bot, message *discordgo.MessageCreate, input []string) {
-	go embed.SendMessage(bot.Session, message.ChannelID,
-		"<https://discordapp.com/oauth2/authorize?client_id=497943811"+
-			"700424704&scope=bot&permissions=281600>")
-}
-
-// Credits accreditates users for their contributions.
-func Credits(bot bot.Bot,
-	message *discordgo.MessageCreate,
-	input []string) {
-	go embed.SendEmbededMessage(bot.Session, message.ChannelID,
-		embed.CreditsEmbed(bot.Name,
-			"(milk wizard#8323 http://cosmic-rumpus.tumblr.com/ )",
-			"",
-			"Dzuk#1671 ( https://noct.zone/ )",
-			"https://raw.githubusercontent.com/oct2pus/vriskabot/master/art/"+
-				"vriskabot.png",
-			bot.Color))
-}
-
 // Help returns a list of commands.
 func Help(bot bot.Bot,
 	message *discordgo.MessageCreate,
@@ -89,12 +82,19 @@ func Help(bot bot.Bot,
 			"\n`invite`\n`help`\n`about`")
 }
 
-// Roll returns a normal type of roll.
-func Roll(bot bot.Bot, message *discordgo.MessageCreate, input []string) {
+// HRoll returns the highest die in a roll.
+func HRoll(bot bot.Bot, message *discordgo.MessageCreate, input []string) {
 	if noInput(input) {
 		input = append(input, "")
 	}
-	go roll(bot, message, input[0], "roll")
+	go roll(bot, message, input[0], "hroll")
+}
+
+// Invite posts a link to invite Vriska8ot.
+func Invite(bot bot.Bot, message *discordgo.MessageCreate, input []string) {
+	go embed.SendMessage(bot.Session, message.ChannelID,
+		"<https://discordapp.com/oauth2/authorize?client_id=497943811"+
+			"700424704&scope=bot&permissions=281600>")
 }
 
 // LRoll returns the lowest die in a roll.
@@ -105,12 +105,25 @@ func LRoll(bot bot.Bot, message *discordgo.MessageCreate, input []string) {
 	go roll(bot, message, input[0], "lroll")
 }
 
-// HRoll returns the highest die in a roll.
-func HRoll(bot bot.Bot, message *discordgo.MessageCreate, input []string) {
+// Roll returns a normal type of roll.
+func Roll(bot bot.Bot, message *discordgo.MessageCreate, input []string) {
 	if noInput(input) {
 		input = append(input, "")
 	}
-	go roll(bot, message, input[0], "hroll")
+	go roll(bot, message, input[0], "roll")
+}
+
+func checkFormatted(input string, rgxp string) bool {
+	// todo: fix +- bullshit with regexp
+	compare, err := regexp.MatchString(rgxp, input)
+	if err != nil {
+		return false
+	}
+
+	if compare {
+		return true
+	}
+	return false
 }
 
 // noInput catches a gotcha, i[] can be len = 0, return true if 0 or smaller.
@@ -184,17 +197,4 @@ func roll(bot bot.Bot,
 		dieImage)
 
 	go embed.SendEmbededMessage(bot.Session, message.ChannelID, emb)
-}
-
-func checkFormatted(input string, rgxp string) bool {
-	// todo: fix +- bullshit with regexp
-	compare, err := regexp.MatchString(rgxp, input)
-	if err != nil {
-		return false
-	}
-
-	if compare {
-		return true
-	}
-	return false
 }
