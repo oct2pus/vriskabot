@@ -4,11 +4,9 @@ import (
 	"regexp"
 	"strconv"
 
-	"github.com/oct2pus/bot/bot"
+	"github.com/oct2pus/bocto"
 
 	"vriskabot/dice/f8"
-
-	"github.com/oct2pus/bot/embed"
 
 	"vriskabot/dice"
 
@@ -16,27 +14,26 @@ import (
 )
 
 // Credits provides attributation.
-func Credits(bot bot.Bot,
+func Credits(bot bocto.Bot,
 	message *discordgo.MessageCreate,
 	input []string) {
-	go embed.SendEmbededMessage(bot.Session, message.ChannelID,
-		embed.CreditsEmbed(bot.Name,
-			"(milk wizard#8323 http://cosmic-rumpus.tumblr.com/ )",
+	bot.Session.ChannelMessageSendEmbed(message.ChannelID,
+		bocto.CreditsEmbed(bot.Name,
+			"milk wizard#8323 ( http://cosmic-rumpus.tumblr.com/ )",
 			"",
 			"Dzuk#1671 ( https://noct.zone/ )",
-			"https://raw.githubusercontent.com/oct2pus/vriskabot/master/art/"+
-				"vriskabot.png",
+			bot.Self.AvatarURL("256"),
 			bot.Color))
 }
 
 // Discord posts my discord URL.
-func Discord(bot bot.Bot, message *discordgo.MessageCreate, input []string) {
-	go embed.SendMessage(bot.Session, message.ChannelID,
+func Discord(bot bocto.Bot, message *discordgo.MessageCreate, input []string) {
+	bot.Session.ChannelMessageSend(message.ChannelID,
 		"https://discord.gg/PGVh2M8")
 }
 
 // F8 represents a F8 dice rice.
-func F8(bot bot.Bot, message *discordgo.MessageCreate, input []string) {
+func F8(bot bocto.Bot, message *discordgo.MessageCreate, input []string) {
 	var mod int64
 	var err error
 	if len(input) != 0 && checkFormatted(input[0], "(\\+|-)?[0-9]+$") {
@@ -67,23 +64,23 @@ func F8(bot bot.Bot, message *discordgo.MessageCreate, input []string) {
 	dieImage := "https://raw.githubusercontent.com/oct2pus/vriskabot/master/" +
 		"art/dfate.png"
 
-	go embed.SendEmbededMessage(bot.Session, message.ChannelID,
+	bot.Session.ChannelMessageSendEmbed(message.ChannelID,
 		dice.RollEmbed(rolls, strconv.FormatInt(die.Mod, 10), total,
 			dieImage))
 }
 
 // Help returns a list of commands.
-func Help(bot bot.Bot,
+func Help(bot bocto.Bot,
 	message *discordgo.MessageCreate,
 	input []string) {
 
-	go embed.SendMessage(bot.Session, message.ChannelID,
+	bot.Session.ChannelMessageSend(message.ChannelID,
 		"My commands are:\n`roll`\n`lroll`\n`hroll`\n`f8`\n`discord`"+
 			"\n`invite`\n`help`\n`about`")
 }
 
 // HRoll returns the highest die in a roll.
-func HRoll(bot bot.Bot, message *discordgo.MessageCreate, input []string) {
+func HRoll(bot bocto.Bot, message *discordgo.MessageCreate, input []string) {
 	if noInput(input) {
 		input = append(input, "")
 	}
@@ -91,14 +88,14 @@ func HRoll(bot bot.Bot, message *discordgo.MessageCreate, input []string) {
 }
 
 // Invite posts a link to invite Vriska8ot.
-func Invite(bot bot.Bot, message *discordgo.MessageCreate, input []string) {
-	go embed.SendMessage(bot.Session, message.ChannelID,
+func Invite(bot bocto.Bot, message *discordgo.MessageCreate, input []string) {
+	bot.Session.ChannelMessageSend(message.ChannelID,
 		"<https://discordapp.com/oauth2/authorize?client_id=497943811"+
 			"700424704&scope=bot&permissions=281600>")
 }
 
 // LRoll returns the lowest die in a roll.
-func LRoll(bot bot.Bot, message *discordgo.MessageCreate, input []string) {
+func LRoll(bot bocto.Bot, message *discordgo.MessageCreate, input []string) {
 	if noInput(input) {
 		input = append(input, "")
 	}
@@ -106,7 +103,7 @@ func LRoll(bot bot.Bot, message *discordgo.MessageCreate, input []string) {
 }
 
 // Roll returns a normal type of roll.
-func Roll(bot bot.Bot, message *discordgo.MessageCreate, input []string) {
+func Roll(bot bocto.Bot, message *discordgo.MessageCreate, input []string) {
 	if noInput(input) {
 		input = append(input, "")
 	}
@@ -136,13 +133,13 @@ func noInput(i []string) bool {
 
 // roll performs the 'math' for a roll, lroll, or hroll function, should not
 // be accessed directly.
-func roll(bot bot.Bot,
+func roll(bot bocto.Bot,
 	message *discordgo.MessageCreate,
 	diceString, com string) {
 
 	if !checkFormatted(diceString,
 		"[1-9]+[0-9]*d[1-9]+[0-9]*((\\+|-){1}[0-9]*)?") {
-		go embed.SendMessage(bot.Session, message.ChannelID,
+		bot.Session.ChannelMessageSend(message.ChannelID,
 			"You gotta format it like this!\n`vriska: "+
 				"roll XdX(+/-X)`")
 		return
@@ -151,19 +148,19 @@ func roll(bot bot.Bot,
 	dieSlices := dice.Slice(diceString)
 	die, err := dice.FromStringSlice(dieSlices)
 	if err != nil {
-		go embed.SendMessage(bot.Session, message.ChannelID, "That num8er is"+
+		bot.Session.ChannelMessageSend(message.ChannelID, "That num8er is"+
 			" waaaaaaaay to 8ig for me the handle.")
 		return
 	}
 
 	if die.Amount > 20 {
-		go embed.SendMessage(bot.Session, message.ChannelID,
+		bot.Session.ChannelMessageSend(message.ChannelID,
 			"Why would anyone ever need to roll that "+
 				"many dice?")
 		return
 	}
 
-	embed.SendMessage(bot.Session, message.ChannelID,
+	bot.Session.ChannelMessageSend(message.ChannelID,
 		"Rolling!!!!!!!!")
 
 	rollTable := dice.Table(die)
@@ -178,7 +175,7 @@ func roll(bot bot.Bot,
 	case "hroll":
 		result = dice.GetHighest(rollTable)
 	case "default": // something REALLY bad happened if this is reached
-		go embed.SendMessage(bot.Session, message.ChannelID,
+		bot.Session.ChannelMessageSend(message.ChannelID,
 			"Holy sh8t dont break me!!!!!!!!")
 		return
 	}
@@ -196,5 +193,5 @@ func roll(bot bot.Bot,
 		strconv.FormatInt(die.Mod, 10), strconv.FormatInt(result, 10),
 		dieImage)
 
-	go embed.SendEmbededMessage(bot.Session, message.ChannelID, emb)
+	bot.Session.ChannelMessageSendEmbed(message.ChannelID, emb)
 }

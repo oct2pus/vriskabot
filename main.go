@@ -8,13 +8,13 @@ import (
 	"syscall"
 	"vriskabot/command"
 
-	"github.com/oct2pus/bot/bot"
+	"github.com/oct2pus/bocto"
 )
 
 func main() {
 	// initalize variables
 	var token string
-	var vriska bot.Bot
+	var vriska bocto.Bot
 	flag.StringVar(&token, "t", "", "Bot Token")
 	flag.Parse()
 
@@ -27,10 +27,10 @@ func main() {
 	}
 	// add commands and responses
 	vriska = addCommands(vriska)
-	vriska = addPhrases(vriska)
 	// Event Handlers
 	vriska.Session.AddHandler(vriska.ReadyEvent)
 	vriska.Session.AddHandler(vriska.MessageCreate)
+	vriska.DisablePhrases = true
 
 	// Open Bot
 	err = vriska.Session.Open()
@@ -52,7 +52,7 @@ func main() {
 	vriska.Session.Close()
 }
 
-func addCommands(bot bot.Bot) bot.Bot {
+func addCommands(bot bocto.Bot) bocto.Bot {
 	// alphabetical order, shorter first
 	bot.AddCommand("about", command.Credits)
 	bot.AddCommand("commands", command.Help)
@@ -66,10 +66,5 @@ func addCommands(bot bot.Bot) bot.Bot {
 	bot.AddCommand("lroll", command.LRoll)
 	bot.AddCommand("roll", command.Roll)
 
-	return bot
-}
-
-func addPhrases(bot bot.Bot) bot.Bot {
-	// if ever?
 	return bot
 }
