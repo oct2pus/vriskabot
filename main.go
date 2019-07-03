@@ -11,6 +11,10 @@ import (
 	"github.com/oct2pus/bocto"
 )
 
+const (
+	pre = "8"
+)
+
 func main() {
 	// initalize variables
 	var token string
@@ -19,8 +23,8 @@ func main() {
 	flag.Parse()
 
 	err := vriska.New("Vriska8ot", "8", token,
-		"Hiiiiiiii?\n8y the way my prefix is \"`vriska: `\". "+
-			"Not that you neeeeeeeeded to know or anything.", "::::?", 0x005682)
+		"Hiiiiiiii?\n8y the way my prefix is `"+pre+"`. "+
+			"Not that you neeeeeeeeded to know or anything.", "::::?\nAre you 8egging me to `"+pre+"help` you?", 0x005682)
 	if err != nil {
 		fmt.Printf("%v can't login\nerror: %v\n", vriska.Name, err)
 		return
