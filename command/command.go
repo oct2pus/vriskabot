@@ -29,7 +29,7 @@ func Credits(bot bocto.Bot,
 // Discord posts my discord URL.
 func Discord(bot bocto.Bot, message *discordgo.MessageCreate, input []string) {
 	bot.Session.ChannelMessageSend(message.ChannelID,
-		"https://discord.gg/PGVh2M8")
+		"https://discord.gg/PFCGhJQ")
 }
 
 // F8 represents a F8 dice rice.
