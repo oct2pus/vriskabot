@@ -6,7 +6,8 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"vriskabot/command"
+
+	"github.com/oct2pus/vriskabot/command"
 
 	"github.com/oct2pus/bocto"
 )
