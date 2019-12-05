@@ -21,7 +21,7 @@ func Credits(bot bocto.Bot,
 	bot.Session.ChannelMessageSendEmbed(message.ChannelID,
 		bocto.CreditsEmbed(
 			bot.Name,
-			bot.Self.AvatarURL(""),
+			bot.Self.AvatarURL("1024"),
 			bot.Color,
 			true,
 			bocto.Contributor{
