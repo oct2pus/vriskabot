@@ -6,9 +6,9 @@ import (
 
 	"github.com/oct2pus/bocto"
 
-	"vriskabot/dice/f8"
+	"github.com/oct2pus/vriskabot/dice/f8"
 
-	"vriskabot/dice"
+	"github.com/oct2pus/vriskabot/dice"
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -17,13 +17,39 @@ import (
 func Credits(bot bocto.Bot,
 	message *discordgo.MessageCreate,
 	input []string) {
+	
 	bot.Session.ChannelMessageSendEmbed(message.ChannelID,
-		bocto.CreditsEmbed(bot.Name,
-			"milk wizard#8323 ( http://cosmic-rumpus.tumblr.com/ )",
-			"",
-			"Dzuk#1671 ( https://noct.zone/ )",
-			bot.Self.AvatarURL("256"),
-			bot.Color))
+		bocto.CreditsEmbed(
+			bot.Name,
+			bot.Self.AvatarURL(""),
+			bot.Color,
+			true,
+			bocto.Contributor{
+				Name:		"\\🐙\\🐙",
+				URL:		"https://oct2pus.tumblr.com/",
+				Message: 	"**Developed** by **%v** (%v)",
+				Type: 		"Developer",
+			},
+			bocto.Contributor{
+				Name:		"Discordgo",
+				URL:		"https://github.com/bwmarrin/discordgo/",
+				Message:	"**Vriska8ot** uses the **%v** library (%v)",
+				Type:		"Library",
+			},
+			bocto.Contributor{
+				Name:		"Dzuk",
+				URL: 		"https://noct.zone/",
+				Message: 	"**Emoji** by **%v** (%v)",
+				Type:		"Artist",
+			},
+			bocto.Contributor{
+				Name:		"Milk Wizard",
+				URL: 		"https://mi1k-wizard.tumblr.com/",
+				Message: 	"**Avatar** by **%v** (%v)",
+				Type: 		"Artist",
+			},
+		),
+	)
 }
 
 // Discord posts my discord URL.
