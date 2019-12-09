@@ -17,7 +17,7 @@ import (
 func Credits(bot bocto.Bot,
 	message *discordgo.MessageCreate,
 	input []string) {
-	
+
 	bot.Session.ChannelMessageSendEmbed(message.ChannelID,
 		bocto.CreditsEmbed(
 			bot.Name,
@@ -25,28 +25,28 @@ func Credits(bot bocto.Bot,
 			bot.Color,
 			true,
 			bocto.Contributor{
-				Name:		"\\🐙\\🐙",
-				URL:		"https://oct2pus.tumblr.com/",
-				Message: 	"**Developed** by **%v** (%v)",
-				Type: 		"Developer",
+				Name:    "\\🐙\\🐙",
+				URL:     "https://oct2pus.tumblr.com/",
+				Message: "**Developed** by **%v** (%v)",
+				Type:    "Developer",
 			},
 			bocto.Contributor{
-				Name:		"Discordgo",
-				URL:		"https://github.com/bwmarrin/discordgo/",
-				Message:	"**Vriska8ot** uses the **%v** library (%v)",
-				Type:		"Library",
+				Name:    "Discordgo",
+				URL:     "https://github.com/bwmarrin/discordgo/",
+				Message: "**Vriska8ot** uses the **%v** library (%v)",
+				Type:    "Library",
 			},
 			bocto.Contributor{
-				Name:		"Dzuk",
-				URL: 		"https://noct.zone/",
-				Message: 	"**Emoji** by **%v** (%v)",
-				Type:		"Artist",
+				Name:    "Dzuk",
+				URL:     "https://noct.zone/",
+				Message: "**Emoji** by **%v** (%v)",
+				Type:    "Artist",
 			},
 			bocto.Contributor{
-				Name:		"Milk Wizard",
-				URL: 		"https://mi1k-wizard.tumblr.com/",
-				Message: 	"**Avatar** by **%v** (%v)",
-				Type: 		"Artist",
+				Name:    "Milk Wizard",
+				URL:     "https://mi1k-wizard.tumblr.com/",
+				Message: "**Avatar** by **%v** (%v)",
+				Type:    "Artist",
 			},
 		),
 	)
@@ -166,8 +166,8 @@ func roll(bot bocto.Bot,
 	if !checkFormatted(diceString,
 		"[1-9]+[0-9]*d[1-9]+[0-9]*((\\+|-){1}[0-9]*)?") {
 		bot.Session.ChannelMessageSend(message.ChannelID,
-			"You gotta format it like this!\n`vriska: "+
-				"roll XdX(+/-X)`")
+			"You gotta format it like this!\n`"+bot.Prefix+
+				com+" XdX(+/-X)`")
 		return
 	}
 
